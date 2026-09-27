@@ -1,0 +1,45 @@
+@import 'tailwindcss';
+
+/*
+ * Tokens de marca. El azul #208AEF coincide con el splash screen de la app movil
+ * (ver app.json -> expo-splash-screen.backgroundColor) para que ambas
+ * interfaces se vean como el mismo producto ante el jurado.
+ */
+@theme {
+  --color-brand-50: oklch(0.97 0.014 254.6);
+  --color-brand-100: oklch(0.93 0.032 255.5);
+  --color-brand-200: oklch(0.88 0.059 254.1);
+  --color-brand-300: oklch(0.81 0.105 251.8);
+  --color-brand-400: oklch(0.72 0.15 249.5);
+  --color-brand-500: oklch(0.62 0.19 246.8);
+  --color-brand-600: oklch(0.55 0.21 244.5);
+  --color-brand-700: oklch(0.48 0.19 241.6);
+  --color-brand-800: oklch(0.42 0.15 238.3);
+  --color-brand-900: oklch(0.38 0.12 235.4);
+  --color-brand-950: oklch(0.28 0.09 236.2);
+
+  /* Estados de plaza en la maqueta de RFA03 / dashboard de RFA11 */
+  --color-plaza-libre: oklch(0.72 0.17 145.9);
+  --color-plaza-ocupada: oklch(0.63 0.21 25.3);
+  --color-plaza-reservada: oklch(0.75 0.15 85.3);
+  --color-plaza-bloqueada: oklch(0.55 0.02 264.7);
+
+  --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: ui-monospace, 'Cascadia Code', Consolas, monospace;
+}
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    @apply bg-slate-50 text-slate-900;
+  }
+
+  /* Los datos obsoletos durante una caida (RNF04) se muestran atenuados. */
+  [data-stale='true'] {
+    @apply opacity-60 grayscale;
+  }
+}
