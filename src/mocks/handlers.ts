@@ -1,6 +1,6 @@
 import { http, HttpResponse } from 'msw'
-import type { Sesion } from '@/lib/types/dominio'
-import { COCHERA_PRINCIPAL, PLAZAS_MOCK, SENSORES_MOCK } from '@/mocks/fixtures'
+import type { Pagina, Sesion, Usuario } from '@/lib/types/dominio'
+import { COCHERA_PRINCIPAL, PLAZAS_MOCK, SENSORES_MOCK, USUARIOS_MOCK } from '@/mocks/fixtures'
 
 /**
  * Contrato provisional. Cuando los microservicios esten definidos, este archivo
@@ -64,4 +64,35 @@ export const handlers = [
 
   // RFA03: estado de las plazas para el Monitor.
   http.get('/api/plazas', () => HttpResponse.json({ items: PLAZAS_MOCK })),
+
+  // RFA01: lista paginada de usuarios con filtros server-side (busqueda,
+  // tipo y estado). La busqueda no distingue mayusculas y barre nombre y
+  // codigo, como pide el flujo de eventos (paso 3).
+  http.get('/api/usuarios', ({ request }) => {
+    const url = new URL(request.url)
+    const busqueda = (url.searchParams.get('busqueda') ?? '').trim().toLowerCase()
+
+    const filtrados = USUARIOS_MOCK.filter((u) => {
+      const porTermino =
+        busqueda === '' ||
+        u.nombre.toLowerCase().includes(busqueda) ||
+        u.codigo.toLowerCase().includes(busqueda)
+      const porTipo =
+        (url.searchParams.get('tipo') ?? '') === '' || u.tipo === url.searchParams.get('tipo')
+      const porEstado =
+        (url.searchParams.get('estado') ?? '') === '' || u.estado === url.searchParams.get('estado')
+      return porTermino && porTipo && porEstado
+    })
+
+    // La pagina viene en base 1 desde la vista; se recorta al rango valido
+    // para que una pagina fuera de rango no devuelva items fantasma.
+    const pageSize = Math.min(100, Math.max(1, Number(url.searchParams.get('pageSize') ?? '10')))
+    const total = filtrados.length
+    const ultima = Math.max(1, Math.ceil(total / pageSize))
+    const pagina = Math.min(ultima, Math.max(1, Number(url.searchParams.get('pagina') ?? '1')))
+
+    const items = filtrados.slice((pagina - 1) * pageSize, pagina * pageSize)
+
+    return HttpResponse.json<Pagina<Usuario>>({ items, total, pagina, pageSize })
+  }),
 ]

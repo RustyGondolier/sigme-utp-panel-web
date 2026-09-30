@@ -22,6 +22,9 @@ export type EstadoSensor = 'ACTIVO' | 'INACTIVO' | 'FUERA_DE_SERVICIO'
 
 export type EstadoAdmin = 'ACTIVO' | 'BLOQUEADO'
 
+/** Estado de una cuenta de usuario de la app. RFA01 permite filtrar por el. */
+export type EstadoUsuario = 'ACTIVO' | 'BLOQUEADO'
+
 export type TipoUsuario = 'ALUMNO' | 'DOCENTE' | 'ADMINISTRATIVO' | 'VISITANTE'
 
 export interface Cochera {
@@ -88,6 +91,7 @@ export interface Usuario {
   nombre: string
   correo: string
   tipo: TipoUsuario
+  estado: EstadoUsuario
   registradoEn: string
 }
 
