@@ -5,6 +5,7 @@ import { RequireAuth, RequireRole } from '@/app/guards/RequireAuth'
 import LoginPage from '@/features/auth/LoginPage'
 import AccesoDenegadoPage from '@/features/auth/AccesoDenegadoPage'
 import { UsuariosPage } from '@/features/usuarios/UsuariosPage'
+import { UsuarioDetallePage } from '@/features/usuarios/UsuarioDetallePage'
 
 /**
  * Estructura de rutas segun RFA13.
@@ -34,10 +35,7 @@ export function AppRoutes() {
         <Route element={<ProtectedLayout />}>
           <Route path="/" element={<PlaceholderPage rfa="RFA11" titulo="Dashboard" />} />
           <Route path="/usuarios" element={<UsuariosPage />} />
-          <Route
-            path="/usuarios/:id"
-            element={<PlaceholderPage rfa="RFA02" titulo="Detalle de usuario" />}
-          />
+          <Route path="/usuarios/:id" element={<UsuarioDetallePage />} />
           <Route
             path="/monitor"
             element={<PlaceholderPage rfa="RFA03" titulo="Monitoreo del estacionamiento" />}

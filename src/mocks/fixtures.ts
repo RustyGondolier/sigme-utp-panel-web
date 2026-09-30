@@ -1,4 +1,14 @@
-import type { Cochera, Plaza, Sensor, Usuario } from '@/lib/types/dominio'
+import type {
+  Acceso,
+  Cochera,
+  DetalleUsuario,
+  EstadoReserva,
+  Plaza,
+  Reserva,
+  Sensor,
+  Usuario,
+  Vehiculo,
+} from '@/lib/types/dominio'
 
 /**
  * Fixtures minimos para que las vistas se puedan desarrollar y testear sin
@@ -329,3 +339,226 @@ export const USUARIOS_MOCK: Usuario[] = SEMBRADOR_USUARIOS.map(
     registradoEn,
   }),
 )
+
+/* -------------------------------------------------------------------------- */
+/* RFA02: perfil, vehiculos e historiales del usuario                          */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Los historiales se generan en vez de escribirse a mano por una razon concreta:
+ * RFA02 los muestra paginados, asi que hacen falta mas de una pagina por
+ * usuario para que el paginador tenga algo que paginar. Con 12 accesos y 13
+ * reservas por usuario se prueban los dos casos sin escribir a mano 25 bloques
+ * de datos que nadie va a leer.
+ *
+ * Todo se deriva del indice del usuario, asi que el mock es determinista: el
+ * mismo usuario tiene siempre el mismo historial y los tests no dependen de
+ * Math.random.
+ */
+
+/** Accesos por usuario: superan el pageSize de 10 para probar la paginacion. */
+const ACCESOS_POR_USUARIO = 12
+/** RFA05: la reserva vive 30 minutos desde que se solicita. */
+const VIGENCIA_RESERVA_MIN = 30
+const RESERVAS_POR_USUARIO = 13
+
+const MARCAS: [string, string][] = [
+  ['Toyota', 'Yaris'],
+  ['Hyundai', 'Accent'],
+  ['Kia', 'Rio'],
+  ['Nissan', 'March'],
+  ['Volkswagen', 'Gol'],
+  ['Chevrolet', 'Onix'],
+  ['Renault', 'Sandero'],
+  ['Mazda', 'Mazda 2'],
+]
+
+const COLORES = ['Blanco', 'Negro', 'Plata', 'Azul', 'Rojo', 'Gris']
+
+/**
+ * El unico ingreso abierto del sistema, y el unico vehiculo ocupando una plaza.
+ * Se lee de PLAZAS_MOCK en vez de hardcodearlo para que el Monitor (RFA03) y el
+ * perfil del usuario (RFA02) no se contradigan en la demo.
+ */
+const OCUPANTE_ABIERTO = PLAZAS_MOCK[1].ocupante
+
+/**
+ * Datos del ingreso abierto de un usuario, o null si todavia no entro.
+ *
+ * Se devuelve un objeto ya armado en vez de `ocupante` mas una bandera porque
+ * TypeScript no estrecha un campo opcional a traves de un booleano, y la
+ * alternativa es escribir aserciones no-null en tres lugares.
+ */
+function ingresoAbierto(indice: number) {
+  if (indice !== 0 || !OCUPANTE_ABIERTO) return null
+  return {
+    vehiculo: OCUPANTE_ABIERTO.vehiculo,
+    ingresoEn: OCUPANTE_ABIERTO.ingresoEn,
+    plazaId: PLAZAS_MOCK[1].id,
+    codigoPlaza: PLAZAS_MOCK[1].codigo,
+  }
+}
+
+/** Placa peruana: dos letras, guion, dos digitos y dos letras. */
+function placaDe(indice: number, numero: number): string {
+  const letras = 'ABCDEFGHJKLMNPRSTUVWXYZ'
+  const digitos = String(((indice + 1) * 13 + numero * 5) % 100).padStart(2, '0')
+  return (
+    letras[indice % letras.length] +
+    letras[(indice * 7 + numero) % letras.length] +
+    '-' +
+    digitos +
+    letras[(indice * 5 + numero) % letras.length] +
+    letras[(indice * 11 + numero * 3) % letras.length]
+  )
+}
+
+/** Cuantos vehiculos tiene: de 0 a 3, para que la vista muestre el caso vacio. */
+const cantidadVehiculos = (indice: number) => (indice % 4 === 3 ? 0 : (indice % 3) + 1)
+
+const haceDias = (dias: number) => new Date(Date.now() - dias * 86_400_000).toISOString()
+
+/**
+ * Vehiculos registrados. El primero es el principal (RF10) y, si el usuario
+ * tiene un ingreso abierto, ese mismo es el que ocupa la plaza.
+ */
+export function vehiculosDe(indice: number): Vehiculo[] {
+  const abierto = ingresoAbierto(indice)
+
+  return Array.from({ length: cantidadVehiculos(indice) }, (_, numero) => {
+    const [marca, modelo] = MARCAS[(indice + numero) % MARCAS.length]
+    const enPlaza = numero === 0 && abierto !== null
+
+    return {
+      id: `veh-${String(indice + 1).padStart(2, '0')}-${numero + 1}`,
+      placa: enPlaza && abierto ? abierto.vehiculo : placaDe(indice, numero),
+      marca,
+      modelo,
+      color: COLORES[(indice + numero * 2) % COLORES.length],
+      principal: numero === 0,
+      registradoEn: haceDias(30 - indice - numero),
+      ...(enPlaza && abierto
+        ? {
+            ocupacion: {
+              plazaId: abierto.plazaId,
+              codigoPlaza: abierto.codigoPlaza,
+              ingresoEn: abierto.ingresoEn,
+            },
+          }
+        : {}),
+    }
+  })
+}
+
+/**
+ * Historial de accesos. Todos son eventos ya cerrados salvo el ingreso abierto
+ * del usuario que esta adentro ahora mismo, que es el unico con `salidaEn`
+ * ausente.
+ */
+export function accesosDe(usuario: Usuario, indice: number): Acceso[] {
+  const abierto = ingresoAbierto(indice)
+  const placas = PLAZAS_MOCK
+
+  const lista: Acceso[] = Array.from({ length: ACCESOS_POR_USUARIO }, (_, numero) => {
+    const sigueAbierto = numero === 0 && abierto !== null
+    const ingresoEn = haceDias(numero + 1 + (indice % 9))
+    const horasDentro = 1 + (indice % 5)
+
+    return {
+      id: `acc-${String(indice + 1).padStart(2, '0')}-${String(numero + 1).padStart(2, '0')}`,
+      usuarioId: usuario.id,
+      codigoUsuario: usuario.codigo,
+      nombreUsuario: usuario.nombre,
+      cocheraId: COCHERA_PRINCIPAL.id,
+      codigoPlaza: placas[(indice + numero) % placas.length].codigo,
+      vehiculo: vehiculosDe(indice)[0]?.placa ?? placaDe(indice, 0),
+      ingresoEn,
+      ...(sigueAbierto
+        ? {}
+        : {
+            salidaEn: new Date(
+              new Date(ingresoEn).getTime() + horasDentro * 3_600_000,
+            ).toISOString(),
+          }),
+      estado: sigueAbierto ? 'DENTRO' : 'FUERA',
+    }
+  })
+
+  // El ingreso abierto tiene que mostrar la plaza que realmente ocupa, no la que
+  // le tocaria por la formula: el Monitor dice que el vehiculo esta en A-02.
+  if (abierto) {
+    lista[0] = {
+      ...lista[0],
+      codigoPlaza: abierto.codigoPlaza,
+      ingresoEn: abierto.ingresoEn,
+    }
+  }
+
+  return lista
+}
+
+/** Estados de reserva mezclados, para que el historial tenga de cada uno. */
+const CICLO_RESERVAS: EstadoReserva[] = [
+  'COMPLETADA',
+  'COMPLETADA',
+  'EXPIRADA',
+  'COMPLETADA',
+  'CANCELADA_POR_ADMIN',
+  'EXPIRADA',
+  'COMPLETADA',
+  'EXPIRADA',
+  'COMPLETADA',
+  'EXPIRADA',
+  'COMPLETADA',
+  'CANCELADA_POR_ADMIN',
+  'EXPIRADA',
+]
+
+/**
+ * Historial de reservas. La primera esta activa y es la unica sin cerrar, que es
+ * lo que veria en su app un usuario con el proceso en curso.
+ */
+export function reservasDe(usuario: Usuario, indice: number): Reserva[] {
+  const plazas = PLAZAS_MOCK
+
+  return Array.from({ length: RESERVAS_POR_USUARIO }, (_, numero) => {
+    const solicitadaEn = new Date(
+      Date.now() - (numero * 2 + 1) * 86_400_000 + (indice % 7) * 3_600_000,
+    ).toISOString()
+    const plaza = plazas[(indice + numero) % plazas.length]
+
+    return {
+      id: `res-${String(indice + 1).padStart(2, '0')}-${String(numero + 1).padStart(2, '0')}`,
+      usuarioId: usuario.id,
+      codigoUsuario: usuario.codigo,
+      nombreUsuario: usuario.nombre,
+      cocheraId: COCHERA_PRINCIPAL.id,
+      plazaId: plaza.id,
+      codigoPlaza: plaza.codigo,
+      estado: numero === 0 ? 'ACTIVA' : CICLO_RESERVAS[numero % CICLO_RESERVAS.length],
+      solicitadaEn,
+      venceEn: new Date(
+        new Date(solicitadaEn).getTime() + VIGENCIA_RESERVA_MIN * 60_000,
+      ).toISOString(),
+    }
+  })
+}
+
+/** Datos personales de RNF12, que la fila de RFA01 no necesita mostrar. */
+function datosSensibleDe(indice: number) {
+  return {
+    dni: String(70_000_000 + indice * 137_891),
+    telefono: `9${String(10_000_000 + indice * 31_337).slice(0, 8)}`,
+    licenciaConducir: `Q${String(20_000_000 + indice * 41_113).slice(0, 8)}`,
+    // El CONADIS solo aplica a quien lo tiene: no todos lo necesitan.
+    ...(indice % 3 === 0 ? { conadis: `CD-${String(1000 + indice).padStart(5, '0')}` } : {}),
+  }
+}
+
+/** Perfil completo: lo de RFA01 mas lo que solo importa en el detalle. */
+export function detalleDe(usuario: Usuario, indice: number): DetalleUsuario {
+  return {
+    perfil: { ...usuario, ...datosSensibleDe(indice) },
+    vehiculos: vehiculosDe(indice),
+  }
+}

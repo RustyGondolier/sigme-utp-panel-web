@@ -95,6 +95,56 @@ export interface Usuario {
   registradoEn: string
 }
 
+/** Donde esta un vehiculo ahora mismo. Ausente si el vehiculo esta fuera. */
+export interface Ocupacion {
+  plazaId: string
+  codigoPlaza: string
+  ingresoEn: string
+}
+
+/**
+ * Vehiculo registrado por el usuario de la app movil (RF06 a RF10).
+ *
+ * `ocupacion` no es un estado guardado sino la foto del momento: RFA02 pide ver
+ * los vehiculos de un usuario, y saber si esta dentro del estacionamiento es la
+ * mitad de esa informacion. Si esta fuera, la plaza se libera sola.
+ */
+export interface Vehiculo {
+  id: string
+  placa: string
+  marca: string
+  modelo: string
+  color: string
+  /** RF10: el vehiculo que se elige solo al reservar. */
+  principal: boolean
+  registradoEn: string
+  ocupacion?: Ocupacion
+}
+
+/**
+ * Perfil completo de un usuario (RFA02).
+ *
+ * Extiende a `Usuario` en vez de agregar campos sueltos porque la fila de
+ * RFA01 y el perfil comparten nombre, codigo, correo, tipo y estado: si fueran
+ * dos interfaces distintas, un cambio en la fila se olvidaria en el perfil.
+ *
+ * Los tres campos de `RNF12` (DNI, licencia, CONADIS) son los que el backend
+ * guarda cifrados. Llegan al panel porque el administrador tiene que poder
+ * verificar la identidad, pero la vista no los escribe en claro por defecto.
+ */
+export interface UsuarioDetalle extends Usuario {
+  dni: string
+  telefono?: string
+  licenciaConducir?: string
+  conadis?: string
+}
+
+/** Respuesta de GET /usuarios/:id: el perfil y sus vehiculos en un solo viaje. */
+export interface DetalleUsuario {
+  perfil: UsuarioDetalle
+  vehiculos: Vehiculo[]
+}
+
 export interface Acceso {
   id: string
   usuarioId: string
