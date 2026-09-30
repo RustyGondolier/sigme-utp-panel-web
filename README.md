@@ -55,12 +55,15 @@ Abrí **http://localhost:5173**.
 
 ### Credenciales de prueba
 
-MSW responde siempre el mismo administrador, sin importar qué se escriba:
+El login de MSW valida contra las cuentas sembradas, así que no cualquier
+combinación entra: cada una tiene la misma contraseña temporal.
 
-```
-Usuario:     admin
-Contraseña:  utp2026
-```
+| Usuario    | Contraseña | Estado    | Nota                      |
+| ---------- | ---------- | --------- | ------------------------- |
+| `admin`    | `utp2026`  | Activo    | La cuenta en sesión (E2)  |
+| `mgomez`   | `utp2026`  | Activo    | Tiene reserva activa (E3) |
+| `rsoto`    | `utp2026`  | Activo    | Se puede desactivar       |
+| `lparedes` | `utp2026`  | Bloqueado | Al iniciar sesión da 403  |
 
 La sesión se guarda en `localStorage` bajo `sigme-sesion` y dura 8 horas
 (RNF05). Para volver al login: botón **Cerrar sesión** del sidebar, o borrar esa
@@ -109,11 +112,42 @@ escribir código: ahí está el porqué de cada decisión.
 
 ## Estado actual
 
-- **Las 12 vistas siguen como `PlaceholderPage`.** Lo que ya está terminado son
-  los bloques que comparten: design system, tokens UTP, layout con menú, sesión,
-  guards y rutas protegidas.
+- **Cuatro vistas terminadas**: la lista de usuarios (RFA01), su perfil con el
+  historial de accesos y reservas (RFA02), el historial global de accesos
+  (RFA07) y la gestión de cuentas de administrador (RFA12). El resto de secciones
+  del menú sigue como `PlaceholderPage`. Lo que ya está terminado en todas es lo
+  que comparten: design system, tokens UTP, layout con menú, sesión, guards y
+  rutas protegidas.
+- **RFA12 es la primera vista que escribe.** Sus mutaciones son el patrón a
+  seguir: la vista no hace `fetch`, la mutación invalida la consulta y el error
+  del servidor se muestra con `useAvisos`. Como hay escritura, los mocks ya no
+  son solo de lectura: `src/mocks/estado.ts` guarda el estado vivo y
+  `setup.ts` lo reinicia antes de cada test.
 - **Un solo rol** en el MVP: `ADMINISTRADOR` (RFA09).
 - **1 cochera con 8 plazas.** RNF11 pide que nada quede amarrado a una sola
   cochera.
 - **Los datos vienen de MSW.** Al entrar la API real, se borra `src/mocks/` y se
   pone `VITE_ENABLE_MOCK=false`: ningún componente cambia.
+
+### RFA12: lo que NO quedó implementado
+
+Léase antes de retomar esta historia o de usarla en una demo. La pantalla de
+cuentas está completa en su flujo (listar, crear, editar, desactivar con motivo,
+reactivar), pero hay puntos del requerimiento que el mock no puede sostener y
+otros que quedaron fuera a propósito.
+
+| #   | Qué pide el requerimiento                                                  | Por qué no está                                                                                                                                                                                                                   | Dónde tocarlo                                         |
+| --- | -------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------- |
+| 1   | Paso 3: el administrador ingresa la contraseña temporal de la cuenta nueva | `POST /api/cuentas-admin` recibe `contrasena` pero **no la registra**: el login compara contra `CLAVES_ADMIN_MOCK`, que es estático. Una cuenta creada desde la pantalla existe en la lista pero **no puede iniciar sesión**.     | `handlers.ts`: guardar la clave en el alta            |
+| 2   | Criterio 6: desactivar una cuenta invalida su sesión activa                | No hay revocación de token en el mock. Peor: `GET /api/auth/sesion` devuelve siempre la sesión sembrada de `admin`, así que **recargar la página devuelve la identidad de `admin`** aunque se haya entrado con `mgomez`.          | `handlers.ts`: sesión viva en `estado.ts`             |
+| 3   | Pasos 3 y 5: asignar y cambiar el **rol**                                  | Con un solo rol en el MVP (RFA09) se muestra como texto fijo; no hay control. La API ya acepta `rol` en alta y edición.                                                                                                           | `CuentasAdminPage.tsx`: `Select` cuando exista el rol |
+| 4   | E3: no desactivar una cuenta con **reserva de plaza activa**               | `CuentaAdmin.reservaActiva` es un **booleano sembrado**, no la reserva real: en este modelo las cuentas del panel no reservan plazas (las reservan los usuarios de la app móvil).                                                 | Requiere el backend; el campo está listo              |
+| 5   | E4: no desactivar la **última** cuenta activa                              | Implementada en la vista y en el handler, y cubierta por tests, pero **no se puede provocar desde la pantalla**: `admin` siempre está activa, así que E2 (cuenta propia) gana siempre. Solo se ve falseando la respuesta del GET. | `cuentas.api.test.ts` la cubre                        |
+| 6   | "Todas las acciones deben quedar registradas"                              | El audit log registra acción, elemento y motivo, pero **no el valor anterior ni el nuevo**. Una edición de correo queda registrada con el correo **viejo** (`handlers.ts` usa `cuenta.correo`, el previo al cambio).              | `handlers.ts`: guardar `detalle`                      |
+| 7   | —                                                                          | **Sin filtros ni paginación** en la lista (decisión tomada: el paso 2 pide la lista completa y son pocas cuentas).                                                                                                                | `cuentas.api.ts` si hace falta                        |
+| 8   | —                                                                          | **No hay cambio de contraseña en el primer ingreso.** El texto del modal describe el proceso, pero el panel no tiene esa pantalla: no está en el alcance de RFA12.                                                                | Historia aparte                                       |
+| 9   | —                                                                          | **La vista del audit log (RFA10) no existe.** RFA12 solo escribe entradas; la pantalla es de otra historia (Dev C).                                                                                                               | `features/auditoria/`                                 |
+
+Aparte, y esperable en MSW: las cuentas creadas y el audit log viven **en
+memoria** (`src/mocks/estado.ts`), así que se pierden al recargar la página.
+Reiniciar el dev server deja las cuatro cuentas sembradas otra vez.
