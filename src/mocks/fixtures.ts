@@ -1,7 +1,9 @@
 import type {
   Acceso,
   Cochera,
+  CuentaAdmin,
   DetalleUsuario,
+  EntradaAuditoria,
   EstadoReserva,
   Plaza,
   Reserva,
@@ -610,3 +612,100 @@ export function detalleDe(usuario: Usuario, indice: number): DetalleUsuario {
     vehiculos: vehiculosDe(indice),
   }
 }
+
+/**
+ * Cuentas de administrador del panel (RFA12).
+ *
+ * `adm-001` es la cuenta del mock de sesion, asi que el administrador que entra
+ * a la demo existe en la lista y puede usar las reglas E2 y E4. Se siembran tres
+ * activas y una bloqueada para que los tres caminos del listado se vean de una:
+ * la propia, la que tiene reserva y la que esta bloqueada.
+ */
+export const CUENTAS_ADMIN_MOCK: CuentaAdmin[] = [
+  {
+    id: 'adm-001',
+    usuario: 'admin',
+    correo: 'admin@utp.edu.pe',
+    rol: 'ADMINISTRADOR',
+    estado: 'ACTIVO',
+    creadoEn: haceDias(240),
+    ultimoAccesoEn: hace(5),
+  },
+  {
+    id: 'adm-002',
+    usuario: 'mgomez',
+    correo: 'maria.gomez@utp.edu.pe',
+    rol: 'ADMINISTRADOR',
+    estado: 'ACTIVO',
+    creadoEn: haceDias(120),
+    ultimoAccesoEn: hace(300),
+    // E3: la regla que impide desactivar una cuenta con reserva de plaza activa.
+    reservaActiva: true,
+  },
+  {
+    id: 'adm-003',
+    usuario: 'rsoto',
+    correo: 'raul.soto@utp.edu.pe',
+    rol: 'ADMINISTRADOR',
+    estado: 'ACTIVO',
+    creadoEn: haceDias(45),
+  },
+  {
+    id: 'adm-004',
+    usuario: 'lparedes',
+    correo: 'lucia.paredes@utp.edu.pe',
+    rol: 'ADMINISTRADOR',
+    estado: 'BLOQUEADO',
+    creadoEn: haceDias(400),
+    ultimoAccesoEn: hace(20_000),
+  },
+]
+
+/**
+ * Contrasenas de las cuentas, en un mapa aparte y no dentro de `CuentaAdmin`.
+ *
+ * RFA12 exige que cada cuenta tenga credenciales propias, pero el hash nunca
+ * viaja al cliente: si la contrasena viviera en la cuenta, un `GET` de la lista
+ * la devolveria en la respuesta. El login compara contra este mapa.
+ */
+export const CLAVES_ADMIN_MOCK: Record<string, string> = {
+  admin: 'utp2026',
+  mgomez: 'utp2026',
+  rsoto: 'utp2026',
+  lparedes: 'utp2026',
+}
+
+/**
+ * Audit log sembrado (RFA10).
+ *
+ * RFA12 solo escribe entradas; la pantalla que las lee es de otra historia, asi
+ * que estas tres son historicas, para que esa vista no arranque vacia. Van en
+ * UTC, como manda RFA10.
+ */
+export const AUDITORIA_MOCK: EntradaAuditoria[] = [
+  {
+    id: 'aud-003',
+    adminId: 'adm-001',
+    adminNombre: 'Administrador',
+    accion: 'CREAR_CUENTA',
+    elemento: 'rsoto@utp.edu.pe',
+    ocurridoEn: haceDias(1),
+  },
+  {
+    id: 'aud-002',
+    adminId: 'adm-001',
+    adminNombre: 'Administrador',
+    accion: 'DESACTIVAR_CUENTA',
+    elemento: 'invitado@utp.edu.pe',
+    ocurridoEn: haceDias(2),
+    motivo: 'Cuenta temporal de la demo de admision',
+  },
+  {
+    id: 'aud-001',
+    adminId: 'adm-001',
+    adminNombre: 'Administrador',
+    accion: 'EDITAR_CUENTA',
+    elemento: 'admin@utp.edu.pe',
+    ocurridoEn: haceDias(4),
+  },
+]

@@ -7,6 +7,7 @@ import AccesoDenegadoPage from '@/features/auth/AccesoDenegadoPage'
 import { UsuariosPage } from '@/features/usuarios/UsuariosPage'
 import { UsuarioDetallePage } from '@/features/usuarios/UsuarioDetallePage'
 import { AccesosPage } from '@/features/accesos/AccesosPage'
+import { CuentasAdminPage } from '@/features/cuentas-admin/CuentasAdminPage'
 
 /**
  * Estructura de rutas segun RFA13.
@@ -57,10 +58,7 @@ export function AppRoutes() {
 
           {/* RFA13 caso E1: seccion restringida por rol. */}
           <Route element={<RequireRole roles={['ADMINISTRADOR']} />}>
-            <Route
-              path="/configuracion/administradores"
-              element={<PlaceholderPage rfa="RFA12" titulo="Cuentas de administrador" />}
-            />
+            <Route path="/configuracion/administradores" element={<CuentasAdminPage />} />
             <Route
               path="/configuracion/auditoria"
               element={<PlaceholderPage rfa="RFA10" titulo="Audit log" />}

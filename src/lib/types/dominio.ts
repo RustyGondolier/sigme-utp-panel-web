@@ -180,6 +180,21 @@ export interface Acceso {
   estado: EstadoAcceso
 }
 
+/**
+ * Una cuenta de administrador del panel (RFA12).
+ *
+ * `reservaActiva` es un sustituto del mock: E3 prohibe desactivar una cuenta que
+ * tenga una reserva de plaza activa, pero en este modelo las cuentas del panel no
+ * reservan plazas (las reservan los usuarios de la app movil, que son otra
+ * entidad). El campo existe para poder ejercitar y probar la regla; el backend
+ * real responderia con el motivo, no con un booleano.
+ *
+ * `esLaCuentaEnSesion` lo pone el servidor y no la vista: es el quien sabe de
+ * que token viene la peticion, y asi la vista de cuentas no tiene que leer el
+ * store de sesion de `features/auth`. Ese store es de otro dominio, y las
+ * features no se importan entre si. E2 necesita el dato, no el id: la regla dice
+ * "tu cuenta", no "la cuenta `adm-001`".
+ */
 export interface CuentaAdmin {
   id: string
   usuario: string
@@ -188,8 +203,17 @@ export interface CuentaAdmin {
   estado: EstadoAdmin
   creadoEn: string
   ultimoAccesoEn?: string
+  reservaActiva?: boolean
+  esLaCuentaEnSesion?: boolean
 }
 
+/**
+ * Una entrada del audit log (RFA10), en UTC.
+ *
+ * `motivo` lo escribe la vista cuando la accion lo pide: `ConfirmDialog` exige
+ * un motivo de 10 caracteres y avisa de que queda registrado, asi que sin este
+ * campo el motivo se perderia justo donde el administrador lo escribio.
+ */
 export interface EntradaAuditoria {
   id: string
   adminId: string
@@ -198,6 +222,7 @@ export interface EntradaAuditoria {
   elemento: string
   /** RFA10: el audit log se guarda en UTC. */
   ocurridoEn: string
+  motivo?: string
 }
 
 /** Respuesta paginada de la API. RFA01 y RFA07 piden paginacion server-side. */

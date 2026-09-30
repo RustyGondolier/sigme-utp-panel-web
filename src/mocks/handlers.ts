@@ -1,7 +1,16 @@
 import { http, HttpResponse } from 'msw'
-import type { Acceso, Cochera, Pagina, Reserva, Sesion, Usuario } from '@/lib/types/dominio'
+import type {
+  Acceso,
+  Cochera,
+  CuentaAdmin,
+  Pagina,
+  Reserva,
+  Sesion,
+  Usuario,
+} from '@/lib/types/dominio'
 import {
   ACCESOS_MOCK,
+  CLAVES_ADMIN_MOCK,
   COCHERAS_MOCK,
   PLAZAS_MOCK,
   SENSORES_MOCK,
@@ -10,6 +19,7 @@ import {
   detalleDe,
   reservasDe,
 } from '@/mocks/fixtures'
+import { auditoria, cuentasAdmin, registrarAuditoria } from '@/mocks/estado'
 
 /**
  * Contrato provisional. Cuando los microservicios esten definidos, este archivo
@@ -91,26 +101,104 @@ function ordenarPorIngresoDescendente(a: Acceso, b: Acceso): number {
   return diferencia !== 0 ? diferencia : a.id.localeCompare(b.id)
 }
 
+/**
+ * La cuenta del panel que esta en sesion.
+ *
+ * RFA12 necesita una identidad para aplicar E2 (no puedes desactivar tu propia
+ * cuenta). En la API real saldria del token; aca se fija en el admin sembrado.
+ */
+const ADMIN_EN_SESION = 'adm-001'
+
+/**
+ * Comprobaciones de RFA12 antes de desactivar una cuenta.
+ *
+ * Vive aqui y no importada desde `features/cuentas-admin` a proposito: cuando
+ * exista la API real, `src/mocks/` se borra entero, y un mock que dependa de la
+ * vista habria que reescribir. El server es la autoridad de estas reglas (regla
+ * 8) y la vista solo replica las mismas para no ofrecer una accion que va a
+ * fallar; cada excepcion esta anclada a su codigo, asi que si el backend cambia
+ * el motivo, se cambia en los dos lados con el mismo E a la vista.
+ */
+function bloqueaDesactivacion(cuenta: CuentaAdmin, motivo: string) {
+  if (cuenta.id === ADMIN_EN_SESION) {
+    return { mensaje: 'No puedes desactivar la cuenta con la que iniciaste sesion.', regla: 'E2' }
+  }
+  if (cuenta.reservaActiva) {
+    return { mensaje: 'La cuenta tiene una reserva de plaza activa.', regla: 'E3' }
+  }
+  if (motivo === 'DESACTIVAR_CUENTA') {
+    const activas = cuentasAdmin.items.filter((c) => c.estado === 'ACTIVO').length
+    if (activas <= 1) {
+      return {
+        mensaje: 'No puedes desactivar la ultima cuenta de administrador activa.',
+        regla: 'E4',
+      }
+    }
+  }
+
+  return null
+}
+
+/** Nombre con el que el audit log registra al autor de la accion. */
+function nombreAdminEnSesion() {
+  return sesionAdmin.nombre
+}
+
+/**
+ * La cuenta tal como sale hacia el front: con el flag de "esta es la tuya".
+ *
+ * El servidor es quien sabe de que token viene la peticion, asi que E2 no se
+ * resuelve comparando ids en la vista ni pasándole el store de sesion de otra
+ * feature.
+ */
+function comoSeVe(cuenta: CuentaAdmin): CuentaAdmin {
+  return { ...cuenta, esLaCuentaEnSesion: cuenta.id === ADMIN_EN_SESION }
+}
+
 export const handlers = [
   // RFA09: login. El limite de 5 intentos (RNF07) lo lleva el servidor; aca se
-  // simula solo el caso de exito y el de credenciales invalidas.
+  // simula el caso de exito, el de credenciales invalidas y, desde RFA12, el de
+  // cuenta bloqueada.
   http.post('/api/auth/login', async ({ request }) => {
     const { usuario, contrasena } = (await request.json()) as {
       usuario?: string
       contrasena?: string
     }
 
-    if (usuario === 'admin' && contrasena === 'utp2026') {
-      return HttpResponse.json(sesionAdmin)
+    const cuenta = cuentasAdmin.items.find((c) => c.usuario === usuario)
+
+    if (!cuenta || CLAVES_ADMIN_MOCK[cuenta.usuario] !== contrasena) {
+      return HttpResponse.json(
+        {
+          message: 'Usuario o contrasena incorrectos',
+          codigo: 'CREDENCIALES_INVALIDAS',
+        },
+        { status: 401 },
+      )
     }
 
-    return HttpResponse.json(
-      {
-        message: 'Usuario o contrasena incorrectos',
-        codigo: 'CREDENCIALES_INVALIDAS',
-      },
-      { status: 401 },
-    )
+    // Criterio 6 de RFA12: una cuenta desactivada no puede volver a iniciar
+    // sesion hasta ser reactivada.
+    if (cuenta.estado === 'BLOQUEADO') {
+      return HttpResponse.json(
+        {
+          message: 'La cuenta esta bloqueada. Contacta al administrador general.',
+          codigo: 'CUENTA_BLOQUEADA',
+        },
+        { status: 403 },
+      )
+    }
+
+    cuenta.ultimoAccesoEn = new Date().toISOString()
+
+    return HttpResponse.json<Sesion>({
+      ...sesionAdmin,
+      adminId: cuenta.id,
+      usuario: cuenta.usuario,
+      correo: cuenta.correo,
+      rol: cuenta.rol,
+      token: `mock-token-${cuenta.id}`,
+    })
   }),
 
   http.get('/api/auth/sesion', () => HttpResponse.json(sesionAdmin)),
@@ -247,4 +335,114 @@ export const handlers = [
       pageSize,
     })
   }),
+
+  // RFA12: cuentas de administrador. A diferencia de RFA01 y RFA07, aqui no hay
+  // paginacion ni filtros: el paso 2 del flujo solo pide la lista, y las cuentas
+  // del panel se cuentan con una mano.
+  http.get('/api/cuentas-admin', () =>
+    HttpResponse.json({ items: cuentasAdmin.items.map(comoSeVe) }),
+  ),
+
+  http.post('/api/cuentas-admin', async ({ request }) => {
+    const cuerpo = (await request.json()) as Partial<CuentaAdmin> & { contrasena?: string }
+
+    // E1: el nombre de usuario es unico. Se compara sin distincion de mayusculas
+    // porque "MGomez" y "mgomez" no pueden ser dos personas distintas.
+    const duplicado = cuentasAdmin.items.some(
+      (c) => c.usuario.toLowerCase() === (cuerpo.usuario ?? '').toLowerCase(),
+    )
+
+    if (duplicado) {
+      return HttpResponse.json(
+        {
+          message: 'Ese nombre de usuario ya esta registrado.',
+          codigo: 'USUARIO_YA_REGISTRADO',
+        },
+        { status: 409 },
+      )
+    }
+
+    const cuenta: CuentaAdmin = {
+      id: `adm-${String(cuentasAdmin.items.length + 1).padStart(3, '0')}`,
+      usuario: cuerpo.usuario ?? '',
+      correo: cuerpo.correo ?? '',
+      rol: cuerpo.rol ?? 'ADMINISTRADOR',
+      // Paso 4: la cuenta nace activa.
+      estado: 'ACTIVO',
+      creadoEn: new Date().toISOString(),
+    }
+
+    cuentasAdmin.items.push(cuenta)
+
+    registrarAuditoria({
+      adminId: ADMIN_EN_SESION,
+      adminNombre: nombreAdminEnSesion(),
+      accion: 'CREAR_CUENTA',
+      elemento: cuenta.correo,
+    })
+
+    return HttpResponse.json(comoSeVe(cuenta), { status: 201 })
+  }),
+
+  http.patch('/api/cuentas-admin/:id', async ({ params, request }) => {
+    const id = String(params.id)
+    const indice = cuentasAdmin.items.findIndex((c) => c.id === id)
+
+    if (indice === -1) {
+      return HttpResponse.json(
+        { message: 'La cuenta no existe.', codigo: 'CUENTA_NO_ENCONTRADA' },
+        { status: 404 },
+      )
+    }
+
+    const cuenta = cuentasAdmin.items[indice]
+    const cuerpo = (await request.json()) as Partial<CuentaAdmin> & { motivo?: string }
+    const cambio: Partial<CuentaAdmin> = {}
+    let accion = 'EDITAR_CUENTA'
+
+    // Paso 5: la edicion solo toca el correo institucional o el rol. El usuario
+    // no se renombra, porque `ConfirmDialog` y el login lo tratan como identidad.
+    if (cuerpo.correo !== undefined && cuerpo.correo !== cuenta.correo) {
+      cambio.correo = cuerpo.correo
+    }
+    if (cuerpo.rol !== undefined && cuerpo.rol !== cuenta.rol) {
+      cambio.rol = cuerpo.rol
+    }
+
+    if (cuerpo.estado !== undefined && cuerpo.estado !== cuenta.estado) {
+      if (cuerpo.estado === 'BLOQUEADO') {
+        const bloqueo = bloqueaDesactivacion(cuenta, 'DESACTIVAR_CUENTA')
+        if (bloqueo) {
+          return HttpResponse.json(
+            { message: bloqueo.mensaje, codigo: bloqueo.regla },
+            { status: 409 },
+          )
+        }
+      }
+
+      cambio.estado = cuerpo.estado
+      accion = cuerpo.estado === 'BLOQUEADO' ? 'DESACTIVAR_CUENTA' : 'REACTIVAR_CUENTA'
+    }
+
+    // Guardar sin haber tocado nada no es un error: se responde la cuenta tal
+    // cual y no se ensucia el audit log con una entrada que no describe nada.
+    if (Object.keys(cambio).length === 0) {
+      return HttpResponse.json(comoSeVe(cuenta))
+    }
+
+    cuentasAdmin.items[indice] = { ...cuenta, ...cambio }
+
+    registrarAuditoria({
+      adminId: ADMIN_EN_SESION,
+      adminNombre: nombreAdminEnSesion(),
+      accion,
+      elemento: cuenta.correo,
+      ...(cambio.estado === 'BLOQUEADO' ? { motivo: cuerpo.motivo } : {}),
+    })
+
+    return HttpResponse.json(comoSeVe(cuentasAdmin.items[indice]))
+  }),
+
+  // RFA10 lo consulta otra historia; RFA12 solo necesita que exista la lista.
+  http.get('/api/auditoria', () => HttpResponse.json({ items: auditoria.items })),
 ]
