@@ -1,30 +1,79 @@
 @import 'tailwindcss';
 
 /*
- * Tokens de marca. El azul #208AEF coincide con el splash screen de la app movil
- * (ver app.json -> expo-splash-screen.backgroundColor) para que ambas
- * interfaces se vean como el mismo producto ante el jurado.
+ * Tokens de marca UTP
+ * -------------------
+ * Valores tomados del Manual de Identidad de Marca de la Universidad
+ * Tecnologica del Peru. Los principales son el rojo y el negro UTP; el verde
+ * es secundario y se usa como acento.
+ *
+ *   ROJO UTP   Pantone 193 C   CMYK 0/99/62/11    RGB 181, 13, 48    #B50D30
+ *   NEGRO UTP  Pantone Blk 6 C CMYK 0/0/0/100     RGB 0, 0, 0       #000000
+ *   VERDE UTP  Pantone 3268 C  CMYK 86/0/53/0     RGB 0, 180, 145   #00B491
+ *   GRIS UTP   CMYK 0/0/0/25   RGB 208, 208, 208                    #D0D0D0
+ *
+ * Las escalas brand y accent se derivan de esos hex conservando su matiz
+ * (oklch) y degradando la croma en los extremos, donde sRGB no la sostiene.
+ * El paso 500 de cada escala es el hex oficial exacto. Todos los contrastes
+ * se verificaron con la formula de WCAG 2.1.
  */
 @theme {
-  --color-brand-50: oklch(0.97 0.014 254.6);
-  --color-brand-100: oklch(0.93 0.032 255.5);
-  --color-brand-200: oklch(0.88 0.059 254.1);
-  --color-brand-300: oklch(0.81 0.105 251.8);
-  --color-brand-400: oklch(0.72 0.15 249.5);
-  --color-brand-500: oklch(0.62 0.19 246.8);
-  --color-brand-600: oklch(0.55 0.21 244.5);
-  --color-brand-700: oklch(0.48 0.19 241.6);
-  --color-brand-800: oklch(0.42 0.15 238.3);
-  --color-brand-900: oklch(0.38 0.12 235.4);
-  --color-brand-950: oklch(0.28 0.09 236.2);
+  /* Valores oficiales, para uso textual y citacion documental. */
+  --color-utp-rojo: #b50d30;
+  --color-utp-negro: #000000;
+  --color-utp-verde: #00b491;
+  --color-utp-gris: #d0d0d0;
 
-  /* Estados de plaza en la maqueta de RFA03 / dashboard de RFA11 */
-  --color-plaza-libre: oklch(0.72 0.17 145.9);
-  --color-plaza-ocupada: oklch(0.63 0.21 25.3);
-  --color-plaza-reservada: oklch(0.75 0.15 85.3);
-  --color-plaza-bloqueada: oklch(0.55 0.02 264.7);
+  /* brand = rojo UTP (matiz 19.9) */
+  --color-brand-50: oklch(0.971 0.014 19.9); /* #fff2f1 */
+  --color-brand-100: oklch(0.936 0.034 19.9); /* #ffe1e0 */
+  --color-brand-200: oklch(0.885 0.064 19.9); /* #ffc9c8 */
+  --color-brand-300: oklch(0.822 0.104 19.9); /* #ffa9a9 */
+  --color-brand-400: oklch(0.712 0.152 19.9); /* #f2777a */
+  --color-brand-500: oklch(0.493 0.1923 19.9); /* #b50d30 OFICIAL - 6.85:1 sobre blanco */
+  --color-brand-600: oklch(0.425 0.188 19.9); /* #9b001e */
+  --color-brand-700: oklch(0.36 0.17 19.9); /* #7f0012 */
+  --color-brand-800: oklch(0.3 0.14 19.9); /* #62000c */
+  --color-brand-900: oklch(0.248 0.112 19.9); /* #490008 */
+  --color-brand-950: oklch(0.16 0.07 19.9); /* #240002 */
 
-  --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  /* accent = verde UTP (matiz 172.2) */
+  --color-accent-50: oklch(0.971 0.016 172.2); /* #ebf9f4 */
+  --color-accent-100: oklch(0.936 0.036 172.2); /* #d3f2e7 */
+  --color-accent-200: oklch(0.885 0.062 172.2); /* #b0e7d5 */
+  --color-accent-300: oklch(0.822 0.09 172.2); /* #85d8be */
+  --color-accent-400: oklch(0.712 0.118 172.2); /* #3fba9a */
+  --color-accent-500: oklch(0.686 0.1327 172.2); /* #00b491 OFICIAL - 7.94:1 sobre negro */
+  --color-accent-600: oklch(0.6 0.118 172.2); /* #009678 - 3.73:1 sobre blanco */
+  --color-accent-700: oklch(0.53 0.1 172.2); /* #0b7e65 - 5.02:1 sobre blanco */
+  --color-accent-800: oklch(0.46 0.082 172.2); /* #156753 */
+  --color-accent-900: oklch(0.39 0.066 172.2); /* #145041 */
+  --color-accent-950: oklch(0.28 0.04 172.2); /* #112f27 */
+
+  /* Neutros de la interfaz. El gris UTP (#D0D0D0) es el borde por defecto. */
+  --color-ink: oklch(0.16 0.006 264); /* texto principal */
+  --color-surface: oklch(1 0 0); /* tarjetas y panels */
+  --color-canvas: oklch(0.977 0.003 264); /* fondo de la aplicacion */
+
+  /*
+   * Estados de plaza (RFA03 monitor, RFA11 dashboard).
+   *
+   * Cada estado declara un relleno Y una tinta. No alcanza con un solo color:
+   * el verde UTP 500 solo da 2.65:1 sobre blanco, por debajo del 3:1 que
+   * WCAG 1.4.11 exige para elementos de interfaz. La tinta se eligio para
+   * superar 4.5:1 contra su propio relleno.
+   */
+  --color-plaza-libre-fill: oklch(0.686 0.1327 172.2); /* verde UTP  */
+  --color-plaza-libre-ink: oklch(0.24 0.04 172.2); /* 9.1:1 sobre el verde */
+  --color-plaza-ocupada-fill: oklch(0.36 0.17 19.9); /* brand-700 */
+  --color-plaza-ocupada-ink: oklch(0.985 0 0); /* 11.0:1 sobre el rojo */
+  --color-plaza-reservada-fill: oklch(0.78 0.14 70); /* ambar #f0a646 */
+  --color-plaza-reservada-ink: oklch(0.24 0.06 70); /* 9.4:1 sobre el ambar */
+  --color-plaza-fuera-fill: oklch(0.928 0.006 264); /* gris claro */
+  --color-plaza-fuera-ink: oklch(0.42 0.015 264); /* 6.4:1 sobre el gris */
+  --color-plaza-fuera-borde: oklch(0.55 0.02 264);
+
+  --font-sans: 'Inter Variable', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --font-mono: ui-monospace, 'Cascadia Code', Consolas, monospace;
 }
 
@@ -35,11 +84,23 @@
   }
 
   body {
-    @apply bg-slate-50 text-slate-900;
+    @apply bg-canvas text-ink;
+  }
+
+  /* Foco visible y coherente en toda la app. Se usa en botones, links, campos. */
+  :focus-visible {
+    @apply ring-brand-600 ring-2 ring-offset-2 outline-none;
   }
 
   /* Los datos obsoletos durante una caida (RNF04) se muestran atenuados. */
   [data-stale='true'] {
     @apply opacity-60 grayscale;
+  }
+}
+
+@layer utilities {
+  /* Contenedor de lectura maxima para las tablas anchas. */
+  .container-panel {
+    @apply mx-auto w-full max-w-[1600px] px-4 sm:px-6 lg:px-8;
   }
 }

@@ -1,0 +1,11 @@
+# Normalizar a LF en el repositorio
+* text=auto eol=lf
+
+# Los binarios nunca se tocan
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+*.pdf binary
