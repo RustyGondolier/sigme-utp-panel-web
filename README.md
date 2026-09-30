@@ -109,9 +109,11 @@ escribir código: ahí está el porqué de cada decisión.
 
 ## Estado actual
 
-- **Las 12 vistas siguen como `PlaceholderPage`.** Lo que ya está terminado son
-  los bloques que comparten: design system, tokens UTP, layout con menú, sesión,
-  guards y rutas protegidas.
+- **Tres vistas terminadas**: la lista de usuarios (RFA01), su perfil con el
+  historial de accesos y reservas (RFA02) y el historial global de accesos
+  (RFA07). El resto de secciones del menú sigue como `PlaceholderPage`. Lo que ya
+  está terminado en todas es lo que comparten: design system, tokens UTP, layout
+  con menú, sesión, guards y rutas protegidas.
 - **Un solo rol** en el MVP: `ADMINISTRADOR` (RFA09).
 - **1 cochera con 8 plazas.** RNF11 pide que nada quede amarrado a una sola
   cochera.

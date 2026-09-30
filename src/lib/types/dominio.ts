@@ -145,17 +145,39 @@ export interface DetalleUsuario {
   vehiculos: Vehiculo[]
 }
 
+/** Estado de un acceso: el vehiculo sigue adentro o ya salio. */
+export type EstadoAcceso = 'DENTRO' | 'FUERA'
+
+/**
+ * Un ingreso al estacionamiento y, si ya ocurrio, su salida (RFA07).
+ *
+ * El registro esta desnormalizado a proposito: la fila lleva `nombreUsuario`,
+ * `codigoUsuario`, `cocheraNombre`, `plazaId` y `codigoPlaza` para que el
+ * historial se pueda pintar y filtrar sin pedir el perfil de cada usuario. Es el
+ * mismo criterio que usa `Reserva`.
+ *
+ * `solicitadaEn` es la hora en que el usuario pidio la plaza, que es anterior al
+ * ingreso: RFA07 lista "hora de solicitud" entre las columnas del historial. Sin
+ * ese momento no se puede reconstruir por que entro un vehiculo a una plaza
+ * concreta ni cuanto tardo en llegar.
+ *
+ * `salidaEn` ausente significa que el vehiculo sigue adentro, que es lo unico
+ * que `estado: 'DENTRO'` afirma: el estado se deriva de la ausencia, no al reves.
+ */
 export interface Acceso {
   id: string
   usuarioId: string
   codigoUsuario: string
   nombreUsuario: string
   cocheraId: string
+  cocheraNombre: string
+  plazaId: string
   codigoPlaza: string
   vehiculo: string
+  solicitadaEn: string
   ingresoEn: string
   salidaEn?: string
-  estado: 'DENTRO' | 'FUERA'
+  estado: EstadoAcceso
 }
 
 export interface CuentaAdmin {

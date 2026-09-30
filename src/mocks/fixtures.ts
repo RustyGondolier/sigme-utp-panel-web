@@ -22,6 +22,16 @@ export const COCHERA_PRINCIPAL: Cochera = {
   totalPlazas: 8,
 }
 
+/**
+ * Lista de cocheras, no una cochera.
+ *
+ * RNF11 pide que agregar una cochera sea cambiar la base de datos y no el
+ * codigo, asi que el catalogo se expone como arreglo desde el principio. El
+ * filtro por cochera de RFA07 y el selector de cocheras del dashboard (RFA11)
+ * recorren esto, no una constante suelta.
+ */
+export const COCHERAS_MOCK: Cochera[] = [COCHERA_PRINCIPAL]
+
 const hace = (minutos: number) => new Date(Date.now() - minutos * 60_000).toISOString()
 
 export const PLAZAS_MOCK: Plaza[] = [
@@ -451,18 +461,32 @@ export function vehiculosDe(indice: number): Vehiculo[] {
 }
 
 /**
+ * Minutos entre que se pide la plaza y que entra el vehiculo.
+ *
+ * Tiene que caber dentro de la vigencia de la reserva (RFA05, 30 minutos): si el
+ * ingreso caeria despues, la fila mostraria un ingreso que su reserva ya no
+ * cubria y el historial contaria una situacion imposible.
+ */
+const minutosDeSolicitud = (indice: number) => 2 + (indice % 5) * 4
+
+/** Resta los minutos de espera a un ingreso, para obtener cuando se pidio. */
+const solicitadaAntesDe = (ingresoEn: string, indice: number) =>
+  new Date(new Date(ingresoEn).getTime() - minutosDeSolicitud(indice) * 60_000).toISOString()
+
+/**
  * Historial de accesos. Todos son eventos ya cerrados salvo el ingreso abierto
  * del usuario que esta adentro ahora mismo, que es el unico con `salidaEn`
  * ausente.
  */
 export function accesosDe(usuario: Usuario, indice: number): Acceso[] {
   const abierto = ingresoAbierto(indice)
-  const placas = PLAZAS_MOCK
+  const plazaDe = (numero: number) => PLAZAS_MOCK[(indice + numero) % PLAZAS_MOCK.length]
 
   const lista: Acceso[] = Array.from({ length: ACCESOS_POR_USUARIO }, (_, numero) => {
     const sigueAbierto = numero === 0 && abierto !== null
     const ingresoEn = haceDias(numero + 1 + (indice % 9))
     const horasDentro = 1 + (indice % 5)
+    const plaza = plazaDe(numero)
 
     return {
       id: `acc-${String(indice + 1).padStart(2, '0')}-${String(numero + 1).padStart(2, '0')}`,
@@ -470,8 +494,11 @@ export function accesosDe(usuario: Usuario, indice: number): Acceso[] {
       codigoUsuario: usuario.codigo,
       nombreUsuario: usuario.nombre,
       cocheraId: COCHERA_PRINCIPAL.id,
-      codigoPlaza: placas[(indice + numero) % placas.length].codigo,
+      cocheraNombre: COCHERA_PRINCIPAL.nombre,
+      plazaId: plaza.id,
+      codigoPlaza: plaza.codigo,
       vehiculo: vehiculosDe(indice)[0]?.placa ?? placaDe(indice, 0),
+      solicitadaEn: solicitadaAntesDe(ingresoEn, indice),
       ingresoEn,
       ...(sigueAbierto
         ? {}
@@ -489,13 +516,34 @@ export function accesosDe(usuario: Usuario, indice: number): Acceso[] {
   if (abierto) {
     lista[0] = {
       ...lista[0],
+      plazaId: abierto.plazaId,
       codigoPlaza: abierto.codigoPlaza,
+      solicitadaEn: solicitadaAntesDe(abierto.ingresoEn, indice),
       ingresoEn: abierto.ingresoEn,
     }
   }
 
   return lista
 }
+
+/**
+ * Historial global de accesos: la fuente de RFA07.
+ *
+ * Aplana el historial de los 25 usuarios, asi que son 300 registros y la
+ * paginacion server-side tiene varias paginas que recorrer. Cada usuario aporta
+ * accesos en dias distintos (de 1 a 20 dias atras, corridos segun su indice), de
+ * modo que el filtro por rango de fechas siempre tiene dias con datos: los dias
+ * mas recientes son los mas poblados (el de hace 2 dias trae 6 accesos y el de
+ * hace 3, nueve, porque a menor numero de dias mas usuarios alcanzan a tener un
+ * ingreso), y los mas antiguos se van vaciando hasta llegar a cero.
+ *
+ * Se calcula una sola vez al cargar el modulo, igual que `PLAZAS_MOCK`: el mock
+ * tiene que ser determinista para que los tests no dependan de `Math.random` ni
+ * de la hora exacta en que arranco la suite.
+ */
+export const ACCESOS_MOCK: Acceso[] = USUARIOS_MOCK.flatMap((usuario, indice) =>
+  accesosDe(usuario, indice),
+)
 
 /** Estados de reserva mezclados, para que el historial tenga de cada uno. */
 const CICLO_RESERVAS: EstadoReserva[] = [

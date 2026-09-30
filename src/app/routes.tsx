@@ -6,6 +6,7 @@ import LoginPage from '@/features/auth/LoginPage'
 import AccesoDenegadoPage from '@/features/auth/AccesoDenegadoPage'
 import { UsuariosPage } from '@/features/usuarios/UsuariosPage'
 import { UsuarioDetallePage } from '@/features/usuarios/UsuarioDetallePage'
+import { AccesosPage } from '@/features/accesos/AccesosPage'
 
 /**
  * Estructura de rutas segun RFA13.
@@ -48,10 +49,7 @@ export function AppRoutes() {
             path="/sensores"
             element={<PlaceholderPage rfa="RFA04" titulo="Gestion de sensores" />}
           />
-          <Route
-            path="/accesos"
-            element={<PlaceholderPage rfa="RFA07" titulo="Historial de accesos" />}
-          />
+          <Route path="/accesos" element={<AccesosPage />} />
           <Route
             path="/contenido/faq"
             element={<PlaceholderPage rfa="RFA08" titulo="Preguntas frecuentes" />}

@@ -1,14 +1,15 @@
 import type { BadgeProps } from '@/components/ui'
-import type { Acceso, EstadoReserva, EstadoUsuario, TipoUsuario } from '@/lib/types/dominio'
+import type { EstadoReserva, EstadoUsuario, TipoUsuario } from '@/lib/types/dominio'
 
 /**
  * Etiquetas legibles de los enumerados de usuario. RFA01 los muestra en la
  * tabla y los ofrece como opciones de filtro: si el valor crudo del enum se
  * mostrara en pantalla, pareceria un dato de base de datos.
  *
- * RFA02 reutiliza este archivo para los estados de reserva y de acceso que
- * aparecen en sus historiales: son los mismos datos que RFA05 y RFA07 pintan en
- * su vista, y un estado legible distinto entre pantallas se nota.
+ * RFA02 reutiliza este archivo para los estados de reserva que aparecen en su
+ * historial: son los mismos datos que RFA05 pinta en su vista, y un estado
+ * legible distinto entre pantallas se nota. El estado de acceso no esta aqui
+ * porque lo comparten con RFA07 y vive en `components/shared/estadoAcceso`.
  */
 
 export const TIPOS_USUARIO: TipoUsuario[] = ['ALUMNO', 'DOCENTE', 'ADMINISTRATIVO', 'VISITANTE']
@@ -57,8 +58,4 @@ export function nombreEstadoReserva(estado: EstadoReserva): string {
 
 export function tonoEstadoReserva(estado: EstadoReserva): BadgeProps['tono'] {
   return RESERVA_TONO[estado]
-}
-
-export function nombreEstadoAcceso(estado: Acceso['estado']): string {
-  return estado === 'DENTRO' ? 'Dentro' : 'Finalizado'
 }

@@ -35,12 +35,12 @@ import {
   consultarReservasDeUsuario,
 } from '@/features/usuarios/usuarios.api'
 import {
-  nombreEstadoAcceso,
   nombreEstadoReserva,
   nombreEstadoUsuario,
   nombreTipo,
   tonoEstadoReserva,
 } from '@/features/usuarios/usuarios.etiquetas'
+import { nombreEstadoAcceso, tonoEstadoAcceso } from '@/components/shared/estadoAcceso'
 import { iniciales } from '@/features/usuarios/usuario-detalle'
 
 /**
@@ -426,11 +426,7 @@ function TablaAccesos({
     {
       id: 'estado',
       encabezado: 'Estado',
-      celda: (a) => (
-        <Badge tono={a.estado === 'DENTRO' ? 'exito' : 'neutro'}>
-          {nombreEstadoAcceso(a.estado)}
-        </Badge>
-      ),
+      celda: (a) => <Badge tono={tonoEstadoAcceso(a.estado)}>{nombreEstadoAcceso(a.estado)}</Badge>,
     },
   ]
 
