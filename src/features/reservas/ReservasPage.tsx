@@ -8,6 +8,7 @@ import { useTic } from '@/lib/hooks/useTic'
 export function ReservasPage() {
   const [reservas, setReservas] = useState<Reserva[]>([])
   const [cargando, setCargando] = useState(true)
+  const [reservaSeleccionada, setReservaSeleccionada] = useState<Reserva | null>(null)
   const ahora = useTic()
 
   const columnas: Columna<Reserva>[] = [
@@ -73,6 +74,8 @@ export function ReservasPage() {
         claveFila={(reserva) => reserva.id}
         cargando={cargando}
         vacio="No hay reservas activas."
+        alClickFila={setReservaSeleccionada}
+        filaActivaId={reservaSeleccionada?.id}
       />
     </div>
   )
