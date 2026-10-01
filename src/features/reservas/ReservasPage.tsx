@@ -15,9 +15,24 @@ const columnas: Columna<Reserva>[] = [
     ),
   },
   {
+    id: 'cochera',
+    encabezado: 'Cochera',
+    celda: (reserva) => reserva.cocheraId,
+  },
+  {
     id: 'plaza',
     encabezado: 'Plaza',
     celda: (reserva) => reserva.codigoPlaza,
+  },
+  {
+    id: 'solicitadaEn',
+    encabezado: 'Solicitada',
+    celda: (reserva) => new Date(reserva.solicitadaEn).toLocaleString(),
+  },
+  {
+    id: 'venceEn',
+    encabezado: 'Vence',
+    celda: (reserva) => new Date(reserva.venceEn).toLocaleTimeString(),
   },
   {
     id: 'estado',
