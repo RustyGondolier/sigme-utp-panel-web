@@ -71,4 +71,35 @@ export const handlers = [
       items: RESERVAS_MOCK.filter((reserva) => reserva.estado === 'ACTIVA'),
     })
   }),
+
+  http.post('/api/reservas/:id/cancelar', async ({ params, request }) => {
+    const { id } = params
+    const { motivo } = (await request.json()) as { motivo?: string }
+
+    const reserva = RESERVAS_MOCK.find((item) => item.id === id)
+
+    if (!reserva || reserva.estado !== 'ACTIVA') {
+      return HttpResponse.json(
+        {
+          message: 'La reserva ya no esta activa.',
+          codigo: 'RESERVA_NO_ACTIVA',
+        },
+        { status: 409 },
+      )
+    }
+
+    if (!motivo || motivo.trim().length < 10) {
+      return HttpResponse.json(
+        {
+          message: 'El motivo es obligatorio.',
+          codigo: 'MOTIVO_INVALIDO',
+        },
+        { status: 400 },
+      )
+    }
+
+    reserva.estado = 'CANCELADA_POR_ADMIN'
+
+    return HttpResponse.json(reserva)
+  }),
 ]
