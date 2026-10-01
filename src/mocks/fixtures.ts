@@ -1,4 +1,4 @@
-import type { Cochera, Plaza, Sensor } from '@/lib/types/dominio'
+import type { Cochera, Plaza, Reserva, Sensor } from '@/lib/types/dominio'
 
 /**
  * Fixtures minimos para que las vistas se puedan desarrollar y testear sin
@@ -74,3 +74,32 @@ export const SENSORES_MOCK: Sensor[] = PLAZAS_MOCK.flatMap((plaza, indice) =>
       ]
     : [],
 )
+
+const en = (minutos: number) => new Date(Date.now() + minutos * 60_000).toISOString()
+
+export const RESERVAS_MOCK: Reserva[] = [
+  {
+    id: 'res-01',
+    usuarioId: 'usr-02',
+    codigoUsuario: '20245555',
+    nombreUsuario: 'Luis Mendoza',
+    cocheraId: COCHERA_PRINCIPAL.id,
+    plazaId: 'pla-03',
+    codigoPlaza: 'A-03',
+    estado: 'ACTIVA',
+    solicitadaEn: hace(10),
+    venceEn: en(20),
+  },
+  {
+    id: 'res-02',
+    usuarioId: 'usr-03',
+    codigoUsuario: '20246666',
+    nombreUsuario: 'Maria Torres',
+    cocheraId: COCHERA_PRINCIPAL.id,
+    plazaId: 'pla-05',
+    codigoPlaza: 'A-05',
+    estado: 'ACTIVA',
+    solicitadaEn: hace(5),
+    venceEn: en(25),
+  },
+]
