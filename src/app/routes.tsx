@@ -4,6 +4,7 @@ import { ProtectedLayout } from '@/app/layouts/ProtectedLayout'
 import { RequireAuth, RequireRole } from '@/app/guards/RequireAuth'
 import LoginPage from '@/features/auth/LoginPage'
 import AccesoDenegadoPage from '@/features/auth/AccesoDenegadoPage'
+import { ReservasPage } from '@/features/reservas/ReservasPage'
 
 /**
  * Estructura de rutas segun RFA13.
@@ -44,10 +45,7 @@ export function AppRoutes() {
             path="/monitor"
             element={<PlaceholderPage rfa="RFA03" titulo="Monitoreo del estacionamiento" />}
           />
-          <Route
-            path="/reservas"
-            element={<PlaceholderPage rfa="RFA05" titulo="Reservas activas" />}
-          />
+          <Route path="/reservas" element={<ReservasPage />} />
           <Route
             path="/sensores"
             element={<PlaceholderPage rfa="RFA04" titulo="Gestion de sensores" />}
