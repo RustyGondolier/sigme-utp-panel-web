@@ -77,6 +77,44 @@ export function ReservasPage() {
         alClickFila={setReservaSeleccionada}
         filaActivaId={reservaSeleccionada?.id}
       />
+
+      {reservaSeleccionada ? (
+        <div className="rounded-lg border border-slate-200 bg-white p-4">
+          <h2 className="text-lg font-semibold text-slate-900">Detalle de la reserva</h2>
+
+          <div className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
+            <div>
+              <span className="font-medium text-slate-700">Usuario:</span>{' '}
+              {reservaSeleccionada.nombreUsuario}
+            </div>
+
+            <div>
+              <span className="font-medium text-slate-700">Codigo:</span>{' '}
+              {reservaSeleccionada.codigoUsuario}
+            </div>
+
+            <div>
+              <span className="font-medium text-slate-700">Cochera:</span>{' '}
+              {reservaSeleccionada.cocheraId}
+            </div>
+
+            <div>
+              <span className="font-medium text-slate-700">Plaza:</span>{' '}
+              {reservaSeleccionada.codigoPlaza}
+            </div>
+
+            <div>
+              <span className="font-medium text-slate-700">Solicitada:</span>{' '}
+              {fechaHora(reservaSeleccionada.solicitadaEn)}
+            </div>
+
+            <div>
+              <span className="font-medium text-slate-700">Tiempo restante:</span>{' '}
+              {cuentaRegresiva(reservaSeleccionada.venceEn, ahora)}
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   )
 }
