@@ -4,11 +4,14 @@ import type { Reserva } from '@/lib/types/dominio'
 import { listarReservas } from './reservas.api'
 import { cuentaRegresiva, fechaHora } from '@/lib/formatters'
 import { useTic } from '@/lib/hooks/useTic'
+import { Button } from '@/components/ui/Button'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 
 export function ReservasPage() {
   const [reservas, setReservas] = useState<Reserva[]>([])
   const [cargando, setCargando] = useState(true)
   const [reservaSeleccionada, setReservaSeleccionada] = useState<Reserva | null>(null)
+  const [confirmarCancelacion, setConfirmarCancelacion] = useState(false)
   const ahora = useTic()
 
   const columnas: Columna<Reserva>[] = [
@@ -113,8 +116,25 @@ export function ReservasPage() {
               {cuentaRegresiva(reservaSeleccionada.venceEn, ahora)}
             </div>
           </div>
+
+          <div className="mt-4 flex justify-end">
+            <Button variante="peligro" onClick={() => setConfirmarCancelacion(true)}>
+              Cancelar reserva
+            </Button>
+          </div>
         </div>
       ) : null}
+
+      <ConfirmDialog
+        abierto={confirmarCancelacion}
+        onCerrar={() => setConfirmarCancelacion(false)}
+        onConfirmar={(motivo) => {
+          console.log('Cancelar reserva:', reservaSeleccionada?.id, motivo)
+        }}
+        titulo="Cancelar reserva"
+        descripcion="Esta accion cancelara la reserva seleccionada."
+        etiquetaConfirmar="Cancelar reserva"
+      />
     </div>
   )
 }
