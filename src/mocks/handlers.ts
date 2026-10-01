@@ -1,6 +1,6 @@
 import { http, HttpResponse } from 'msw'
 import type { Sesion } from '@/lib/types/dominio'
-import { COCHERA_PRINCIPAL, PLAZAS_MOCK, SENSORES_MOCK } from '@/mocks/fixtures'
+import { COCHERA_PRINCIPAL, PLAZAS_MOCK, RESERVAS_MOCK, SENSORES_MOCK } from '@/mocks/fixtures'
 
 /**
  * Contrato provisional. Cuando los microservicios esten definidos, este archivo
@@ -64,4 +64,11 @@ export const handlers = [
 
   // RFA03: estado de las plazas para el Monitor.
   http.get('/api/plazas', () => HttpResponse.json({ items: PLAZAS_MOCK })),
+
+  // RFA05: listado de reservas activas.
+  http.get('/api/reservas', () => {
+    return HttpResponse.json({
+      items: RESERVAS_MOCK.filter((reserva) => reserva.estado === 'ACTIVA'),
+    })
+  }),
 ]
