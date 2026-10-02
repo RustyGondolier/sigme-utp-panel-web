@@ -261,4 +261,51 @@ export const handlers = [
 
     return HttpResponse.json(nuevaPregunta, { status: 201 })
   }),
+
+  http.patch('/api/faq/preguntas/:id', async ({ params, request }) => {
+    const { id } = params
+    const { categoriaId, pregunta, respuesta } = (await request.json()) as {
+      categoriaId?: string
+      pregunta?: string
+      respuesta?: string
+    }
+
+    const existente = PREGUNTAS_FAQ_MOCK.find((item) => item.id === id)
+
+    if (!existente) {
+      return HttpResponse.json(
+        {
+          message: 'La pregunta no existe.',
+          codigo: 'PREGUNTA_NO_ENCONTRADA',
+        },
+        { status: 404 },
+      )
+    }
+
+    if (!categoriaId || !CATEGORIAS_FAQ_MOCK.some((categoria) => categoria.id === categoriaId)) {
+      return HttpResponse.json(
+        {
+          message: 'La categoria seleccionada no existe.',
+          codigo: 'CATEGORIA_INVALIDA',
+        },
+        { status: 400 },
+      )
+    }
+
+    if (!pregunta?.trim() || !respuesta?.trim()) {
+      return HttpResponse.json(
+        {
+          message: 'La pregunta y la respuesta son obligatorias.',
+          codigo: 'DATOS_INCOMPLETOS',
+        },
+        { status: 400 },
+      )
+    }
+
+    existente.categoriaId = categoriaId
+    existente.pregunta = pregunta.trim()
+    existente.respuesta = respuesta.trim()
+
+    return HttpResponse.json(existente)
+  }),
 ]
