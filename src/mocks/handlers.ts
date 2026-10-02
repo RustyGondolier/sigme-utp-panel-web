@@ -126,4 +126,28 @@ export const handlers = [
       preguntas: PREGUNTAS_FAQ_MOCK,
     })
   }),
+
+  http.post('/api/faq/categorias', async ({ request }) => {
+    const { nombre } = (await request.json()) as { nombre?: string }
+
+    if (!nombre?.trim()) {
+      return HttpResponse.json(
+        {
+          message: 'El nombre de la categoria es obligatorio.',
+          codigo: 'NOMBRE_REQUERIDO',
+        },
+        { status: 400 },
+      )
+    }
+
+    const nuevaCategoria = {
+      id: `cat-${String(CATEGORIAS_FAQ_MOCK.length + 1).padStart(2, '0')}`,
+      nombre: nombre.trim(),
+      orden: CATEGORIAS_FAQ_MOCK.length + 1,
+    }
+
+    CATEGORIAS_FAQ_MOCK.push(nuevaCategoria)
+
+    return HttpResponse.json(nuevaCategoria, { status: 201 })
+  }),
 ]
