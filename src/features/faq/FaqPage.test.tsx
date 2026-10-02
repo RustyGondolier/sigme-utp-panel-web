@@ -41,3 +41,49 @@ describe('FaqPage', () => {
     expect(await screen.findByRole('heading', { name: 'Reservas' })).toBeInTheDocument()
   })
 })
+
+it('reordena preguntas dentro de una categoria', async () => {
+  const usuario = userEvent.setup()
+
+  vi.mocked(faqApi.obtenerFaq).mockResolvedValue({
+    categorias: [
+      {
+        id: 'cat-01',
+        nombre: 'Reservas',
+        orden: 1,
+      },
+    ],
+    preguntas: [
+      {
+        id: 'faq-01',
+        categoriaId: 'cat-01',
+        pregunta: 'Primera pregunta',
+        respuesta: 'Primera respuesta',
+        orden: 1,
+      },
+      {
+        id: 'faq-02',
+        categoriaId: 'cat-01',
+        pregunta: 'Segunda pregunta',
+        respuesta: 'Segunda respuesta',
+        orden: 2,
+      },
+    ],
+  })
+
+  vi.mocked(faqApi.reordenarPreguntas).mockResolvedValue(undefined)
+
+  render(
+    <AvisosProvider>
+      <FaqPage />
+    </AvisosProvider>,
+  )
+
+  await screen.findByText('Primera pregunta')
+
+  const botonesBajar = screen.getAllByRole('button', { name: 'Bajar' })
+
+  await usuario.click(botonesBajar[0])
+
+  expect(faqApi.reordenarPreguntas).toHaveBeenCalledWith(['faq-02', 'faq-01'])
+})
