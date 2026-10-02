@@ -7,6 +7,8 @@ import { useTic } from '@/lib/hooks/useTic'
 import { Button } from '@/components/ui/Button'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { useAvisos } from '@/components/ui/avisos-context'
+import { FilterBar } from '@/components/ui/SearchInput'
+import { Select } from '@/components/ui/Input'
 
 export function ReservasPage() {
   const [reservas, setReservas] = useState<Reserva[]>([])
@@ -14,6 +16,8 @@ export function ReservasPage() {
   const [reservaSeleccionada, setReservaSeleccionada] = useState<Reserva | null>(null)
   const [confirmarCancelacion, setConfirmarCancelacion] = useState(false)
   const [cancelando, setCancelando] = useState(false)
+  const [filtroCochera, setFiltroCochera] = useState('')
+  const [filtroEstado, setFiltroEstado] = useState('ACTIVA')
   const { avisar } = useAvisos()
   const ahora = useTic()
 
@@ -60,10 +64,13 @@ export function ReservasPage() {
   ]
 
   useEffect(() => {
-    listarReservas()
+    listarReservas({
+      cocheraId: filtroCochera,
+      estado: filtroEstado,
+    })
       .then((respuesta) => setReservas(respuesta.items))
       .finally(() => setCargando(false))
-  }, [])
+  }, [filtroCochera, filtroEstado])
 
   return (
     <div className="space-y-6">
@@ -73,6 +80,35 @@ export function ReservasPage() {
           Consulta las reservas activas del estacionamiento.
         </p>
       </div>
+
+      <FilterBar
+        hayFiltros={Boolean(filtroCochera || filtroEstado !== 'ACTIVA')}
+        onLimpiar={() => {
+          setFiltroCochera('')
+          setFiltroEstado('ACTIVA')
+        }}
+      >
+        <Select
+          aria-label="Filtrar por cochera"
+          value={filtroCochera}
+          onChange={(e) => setFiltroCochera(e.target.value)}
+        >
+          <option value="">Todas las cocheras</option>
+          <option value="coch-01">coch-01</option>
+        </Select>
+
+        <Select
+          aria-label="Filtrar por estado"
+          value={filtroEstado}
+          onChange={(e) => setFiltroEstado(e.target.value)}
+        >
+          <option value="">Todos los estados</option>
+          <option value="ACTIVA">Activa</option>
+          <option value="CANCELADA_POR_ADMIN">Cancelada por admin</option>
+          <option value="EXPIRADA">Expirada</option>
+          <option value="COMPLETADA">Completada</option>
+        </Select>
+      </FilterBar>
 
       <DataTable
         columnas={columnas}
