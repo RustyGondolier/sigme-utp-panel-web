@@ -127,6 +127,7 @@ export function ReservasPage() {
           aria-label="Filtrar por cochera"
           value={filtroCochera}
           onChange={(e) => setFiltroCochera(e.target.value)}
+          className="w-auto min-w-48"
         >
           <option value="">Todas las cocheras</option>
           <option value="coch-01">coch-01</option>
@@ -136,6 +137,7 @@ export function ReservasPage() {
           aria-label="Filtrar por estado"
           value={filtroEstado}
           onChange={(e) => setFiltroEstado(e.target.value)}
+          className="w-auto min-w-48"
         >
           <option value="">Todos los estados</option>
           <option value="ACTIVA">Activa</option>

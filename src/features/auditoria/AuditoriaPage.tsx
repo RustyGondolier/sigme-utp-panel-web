@@ -75,6 +75,7 @@ export function AuditoriaPage() {
           aria-label="Filtrar por administrador"
           value={filtroAdmin}
           onChange={(e) => setFiltroAdmin(e.target.value)}
+          className="w-auto min-w-52"
         >
           <option value="">Todos los administradores</option>
           <option value="adm-001">Administrador</option>
@@ -84,6 +85,7 @@ export function AuditoriaPage() {
           aria-label="Filtrar por accion"
           value={filtroAccion}
           onChange={(e) => setFiltroAccion(e.target.value)}
+          className="w-auto min-w-52"
         >
           <option value="">Todas las acciones</option>
           <option value="CANCELAR_RESERVA">Cancelar reserva</option>
@@ -104,6 +106,7 @@ export function AuditoriaPage() {
           value={filtroDesde}
           onChange={(e) => setFiltroDesde(e.target.value)}
           aria-label="Fecha desde"
+          className="w-auto min-w-40"
         />
 
         <Input
@@ -111,6 +114,7 @@ export function AuditoriaPage() {
           value={filtroHasta}
           onChange={(e) => setFiltroHasta(e.target.value)}
           aria-label="Fecha hasta"
+          className="w-auto min-w-40"
         />
       </FilterBar>
 
