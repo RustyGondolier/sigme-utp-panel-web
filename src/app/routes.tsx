@@ -6,6 +6,7 @@ import LoginPage from '@/features/auth/LoginPage'
 import AccesoDenegadoPage from '@/features/auth/AccesoDenegadoPage'
 import { ReservasPage } from '@/features/reservas/ReservasPage'
 import { FaqPage } from '@/features/faq/FaqPage'
+import { AuditoriaPage } from '@/features/auditoria/AuditoriaPage'
 
 /**
  * Estructura de rutas segun RFA13.
@@ -63,10 +64,7 @@ export function AppRoutes() {
               path="/configuracion/administradores"
               element={<PlaceholderPage rfa="RFA12" titulo="Cuentas de administrador" />}
             />
-            <Route
-              path="/configuracion/auditoria"
-              element={<PlaceholderPage rfa="RFA10" titulo="Audit log" />}
-            />
+            <Route path="/configuracion/auditoria" element={<AuditoriaPage />} />
           </Route>
 
           <Route path="/acceso-denegado" element={<AccesoDenegadoPage />} />
