@@ -6,6 +6,7 @@ import { cuentaRegresiva, fechaHora } from '@/lib/formatters'
 import { useTic } from '@/lib/hooks/useTic'
 import { Button } from '@/components/ui/Button'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
+import { useAvisos } from '@/components/ui/avisos-context'
 
 export function ReservasPage() {
   const [reservas, setReservas] = useState<Reserva[]>([])
@@ -13,6 +14,7 @@ export function ReservasPage() {
   const [reservaSeleccionada, setReservaSeleccionada] = useState<Reserva | null>(null)
   const [confirmarCancelacion, setConfirmarCancelacion] = useState(false)
   const [cancelando, setCancelando] = useState(false)
+  const { avisar } = useAvisos()
   const ahora = useTic()
 
   const columnas: Columna<Reserva>[] = [
@@ -137,12 +139,19 @@ export function ReservasPage() {
           try {
             await cancelarReserva(reservaSeleccionada.id, motivo)
 
+            avisar('exito', 'Reserva cancelada correctamente.')
+
             setReservas((actuales) =>
               actuales.filter((reserva) => reserva.id !== reservaSeleccionada.id),
             )
 
             setReservaSeleccionada(null)
             setConfirmarCancelacion(false)
+          } catch (error) {
+            avisar(
+              'error',
+              error instanceof Error ? error.message : 'No se pudo cancelar la reserva.',
+            )
           } finally {
             setCancelando(false)
           }
