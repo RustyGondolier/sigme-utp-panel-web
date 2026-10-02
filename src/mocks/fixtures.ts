@@ -1,4 +1,11 @@
-import type { Cochera, Plaza, Reserva, Sensor } from '@/lib/types/dominio'
+import type {
+  CategoriaFaq,
+  Cochera,
+  Plaza,
+  PreguntaFaq,
+  Reserva,
+  Sensor,
+} from '@/lib/types/dominio'
 
 /**
  * Fixtures minimos para que las vistas se puedan desarrollar y testear sin
@@ -101,5 +108,42 @@ export const RESERVAS_MOCK: Reserva[] = [
     estado: 'ACTIVA',
     solicitadaEn: hace(5),
     venceEn: en(25),
+  },
+]
+
+export const CATEGORIAS_FAQ_MOCK: CategoriaFaq[] = [
+  {
+    id: 'cat-01',
+    nombre: 'Reservas',
+    orden: 1,
+  },
+  {
+    id: 'cat-02',
+    nombre: 'Ingreso al estacionamiento',
+    orden: 2,
+  },
+]
+
+export const PREGUNTAS_FAQ_MOCK: PreguntaFaq[] = [
+  {
+    id: 'faq-01',
+    categoriaId: 'cat-01',
+    pregunta: 'Cuanto dura una reserva?',
+    respuesta: 'Una reserva permanece activa durante 30 minutos.',
+    orden: 1,
+  },
+  {
+    id: 'faq-02',
+    categoriaId: 'cat-01',
+    pregunta: 'Como cancelo una reserva?',
+    respuesta: 'La reserva puede cancelarse desde la aplicacion antes de su vencimiento.',
+    orden: 2,
+  },
+  {
+    id: 'faq-03',
+    categoriaId: 'cat-02',
+    pregunta: 'Como ingreso al estacionamiento?',
+    respuesta: 'El acceso se realiza utilizando el sistema habilitado por la universidad.',
+    orden: 1,
   },
 ]
