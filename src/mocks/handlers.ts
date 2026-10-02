@@ -66,10 +66,19 @@ export const handlers = [
   http.get('/api/plazas', () => HttpResponse.json({ items: PLAZAS_MOCK })),
 
   // RFA05: listado de reservas activas.
-  http.get('/api/reservas', () => {
-    return HttpResponse.json({
-      items: RESERVAS_MOCK.filter((reserva) => reserva.estado === 'ACTIVA'),
+  http.get('/api/reservas', ({ request }) => {
+    const url = new URL(request.url)
+    const cocheraId = url.searchParams.get('cocheraId')
+    const estado = url.searchParams.get('estado')
+
+    const items = RESERVAS_MOCK.filter((reserva) => {
+      const coincideCochera = !cocheraId || reserva.cocheraId === cocheraId
+      const coincideEstado = !estado || reserva.estado === estado
+
+      return coincideCochera && coincideEstado
     })
+
+    return HttpResponse.json({ items })
   }),
 
   http.post('/api/reservas/:id/cancelar', async ({ params, request }) => {
