@@ -25,4 +25,5 @@ export {
 export { Field, Input, Select, Textarea, type InputProps } from './Input'
 export { Modal } from './Modal'
 export { FilterBar, SearchInput } from './SearchInput'
+export { Tabs, type PanelTab } from './Tabs'
 export { Tooltip, TooltipProvider } from './Tooltip'

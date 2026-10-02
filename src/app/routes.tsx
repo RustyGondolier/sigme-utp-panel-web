@@ -7,6 +7,10 @@ import AccesoDenegadoPage from '@/features/auth/AccesoDenegadoPage'
 import { ReservasPage } from '@/features/reservas/ReservasPage'
 import { FaqPage } from '@/features/faq/FaqPage'
 import { AuditoriaPage } from '@/features/auditoria/AuditoriaPage'
+import { UsuariosPage } from '@/features/usuarios/UsuariosPage'
+import { UsuarioDetallePage } from '@/features/usuarios/UsuarioDetallePage'
+import { AccesosPage } from '@/features/accesos/AccesosPage'
+import { CuentasAdminPage } from '@/features/cuentas-admin/CuentasAdminPage'
 
 /**
  * Estructura de rutas segun RFA13.
@@ -35,14 +39,8 @@ export function AppRoutes() {
       <Route element={<RequireAuth />}>
         <Route element={<ProtectedLayout />}>
           <Route path="/" element={<PlaceholderPage rfa="RFA11" titulo="Dashboard" />} />
-          <Route
-            path="/usuarios"
-            element={<PlaceholderPage rfa="RFA01" titulo="Consulta de usuarios" />}
-          />
-          <Route
-            path="/usuarios/:id"
-            element={<PlaceholderPage rfa="RFA02" titulo="Detalle de usuario" />}
-          />
+          <Route path="/usuarios" element={<UsuariosPage />} />
+          <Route path="/usuarios/:id" element={<UsuarioDetallePage />} />
           <Route
             path="/monitor"
             element={<PlaceholderPage rfa="RFA03" titulo="Monitoreo del estacionamiento" />}
@@ -52,18 +50,12 @@ export function AppRoutes() {
             path="/sensores"
             element={<PlaceholderPage rfa="RFA04" titulo="Gestion de sensores" />}
           />
-          <Route
-            path="/accesos"
-            element={<PlaceholderPage rfa="RFA07" titulo="Historial de accesos" />}
-          />
+          <Route path="/accesos" element={<AccesosPage />} />
           <Route path="/contenido/faq" element={<FaqPage />} />
 
           {/* RFA13 caso E1: seccion restringida por rol. */}
           <Route element={<RequireRole roles={['ADMINISTRADOR']} />}>
-            <Route
-              path="/configuracion/administradores"
-              element={<PlaceholderPage rfa="RFA12" titulo="Cuentas de administrador" />}
-            />
+            <Route path="/configuracion/administradores" element={<CuentasAdminPage />} />
             <Route path="/configuracion/auditoria" element={<AuditoriaPage />} />
           </Route>
 

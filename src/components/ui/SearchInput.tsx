@@ -54,6 +54,11 @@ export function SearchInput({
  * Barra de filtros. Agrupa los controles de filtrado sobre la tabla para que
  * las cinco vistas con filtros compartan la misma disposicion: en escritorio
  * en una fila, en movil apilados.
+ *
+ * El contenedor interno envuelve porque RFA07 es la primera vista con mas de
+ * tres controles (busqueda, cochera, plaza y dos fechas) y, sin envolver, los
+ * select se estiran hasta quedar ilegibles en pantallas medianas en vez de
+ * bajar a la fila siguiente.
  */
 export function FilterBar({
   children,
@@ -73,7 +78,7 @@ export function FilterBar({
         className,
       )}
     >
-      <div className="flex flex-1 flex-col gap-3 sm:flex-row sm:items-center">{children}</div>
+      <div className="flex flex-1 flex-wrap items-center gap-3">{children}</div>
       {onLimpiar ? (
         <button
           type="button"
