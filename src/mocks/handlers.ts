@@ -219,4 +219,46 @@ export const handlers = [
 
     return new HttpResponse(null, { status: 204 })
   }),
+
+  http.post('/api/faq/preguntas', async ({ request }) => {
+    const { categoriaId, pregunta, respuesta } = (await request.json()) as {
+      categoriaId?: string
+      pregunta?: string
+      respuesta?: string
+    }
+
+    if (!categoriaId || !CATEGORIAS_FAQ_MOCK.some((categoria) => categoria.id === categoriaId)) {
+      return HttpResponse.json(
+        {
+          message: 'La categoria seleccionada no existe.',
+          codigo: 'CATEGORIA_INVALIDA',
+        },
+        { status: 400 },
+      )
+    }
+
+    if (!pregunta?.trim() || !respuesta?.trim()) {
+      return HttpResponse.json(
+        {
+          message: 'La pregunta y la respuesta son obligatorias.',
+          codigo: 'DATOS_INCOMPLETOS',
+        },
+        { status: 400 },
+      )
+    }
+
+    const preguntasCategoria = PREGUNTAS_FAQ_MOCK.filter((item) => item.categoriaId === categoriaId)
+
+    const nuevaPregunta = {
+      id: `faq-${String(PREGUNTAS_FAQ_MOCK.length + 1).padStart(2, '0')}`,
+      categoriaId,
+      pregunta: pregunta.trim(),
+      respuesta: respuesta.trim(),
+      orden: preguntasCategoria.length + 1,
+    }
+
+    PREGUNTAS_FAQ_MOCK.push(nuevaPregunta)
+
+    return HttpResponse.json(nuevaPregunta, { status: 201 })
+  }),
 ]
