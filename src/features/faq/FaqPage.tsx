@@ -3,7 +3,7 @@ import type { CategoriaFaq, PreguntaFaq } from '@/lib/types/dominio'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { useAvisos } from '@/components/ui/avisos-context'
-import { crearCategoria, obtenerFaq } from './faq.api'
+import { actualizarCategoria, crearCategoria, obtenerFaq } from './faq.api'
 
 export function FaqPage() {
   const [categorias, setCategorias] = useState<CategoriaFaq[]>([])
@@ -11,6 +11,9 @@ export function FaqPage() {
   const [cargando, setCargando] = useState(true)
   const [nuevaCategoria, setNuevaCategoria] = useState('')
   const [creandoCategoria, setCreandoCategoria] = useState(false)
+  const [categoriaEditandoId, setCategoriaEditandoId] = useState<string | null>(null)
+  const [nombreCategoriaEditando, setNombreCategoriaEditando] = useState('')
+  const [guardandoCategoria, setGuardandoCategoria] = useState(false)
   const { avisar } = useAvisos()
 
   useEffect(() => {
@@ -76,7 +79,76 @@ export function FaqPage() {
           .sort((a, b) => a.orden - b.orden)
           .map((categoria) => (
             <section key={categoria.id} className="rounded-lg border border-slate-200 bg-white p-4">
-              <h2 className="text-lg font-semibold text-slate-900">{categoria.nombre}</h2>
+              {categoriaEditandoId === categoria.id ? (
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  <Input
+                    value={nombreCategoriaEditando}
+                    onChange={(e) => setNombreCategoriaEditando(e.target.value)}
+                    aria-label="Editar nombre de categoria"
+                  />
+
+                  <Button
+                    onClick={async () => {
+                      if (!nombreCategoriaEditando.trim()) return
+
+                      setGuardandoCategoria(true)
+
+                      try {
+                        const actualizada = await actualizarCategoria(
+                          categoria.id,
+                          nombreCategoriaEditando,
+                        )
+
+                        setCategorias((actuales) =>
+                          actuales.map((item) => (item.id === actualizada.id ? actualizada : item)),
+                        )
+
+                        setCategoriaEditandoId(null)
+                        setNombreCategoriaEditando('')
+                        avisar('exito', 'Categoria actualizada correctamente.')
+                      } catch (error) {
+                        avisar(
+                          'error',
+                          error instanceof Error
+                            ? error.message
+                            : 'No se pudo actualizar la categoria.',
+                        )
+                      } finally {
+                        setGuardandoCategoria(false)
+                      }
+                    }}
+                    cargando={guardandoCategoria}
+                    disabled={!nombreCategoriaEditando.trim()}
+                  >
+                    Guardar
+                  </Button>
+
+                  <Button
+                    variante="secundario"
+                    onClick={() => {
+                      setCategoriaEditandoId(null)
+                      setNombreCategoriaEditando('')
+                    }}
+                    disabled={guardandoCategoria}
+                  >
+                    Cancelar
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex items-center justify-between gap-3">
+                  <h2 className="text-lg font-semibold text-slate-900">{categoria.nombre}</h2>
+
+                  <Button
+                    variante="secundario"
+                    onClick={() => {
+                      setCategoriaEditandoId(categoria.id)
+                      setNombreCategoriaEditando(categoria.nombre)
+                    }}
+                  >
+                    Editar
+                  </Button>
+                </div>
+              )}
 
               <div className="mt-3 space-y-3">
                 {preguntas
