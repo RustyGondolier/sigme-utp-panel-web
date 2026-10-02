@@ -308,4 +308,36 @@ export const handlers = [
 
     return HttpResponse.json(existente)
   }),
+
+  http.delete('/api/faq/preguntas/:id', ({ params, request }) => {
+    const { id } = params
+    const url = new URL(request.url)
+    const motivo = url.searchParams.get('motivo')
+
+    const indice = PREGUNTAS_FAQ_MOCK.findIndex((item) => item.id === id)
+
+    if (indice === -1) {
+      return HttpResponse.json(
+        {
+          message: 'La pregunta no existe.',
+          codigo: 'PREGUNTA_NO_ENCONTRADA',
+        },
+        { status: 404 },
+      )
+    }
+
+    if (!motivo || motivo.trim().length < 10) {
+      return HttpResponse.json(
+        {
+          message: 'El motivo es obligatorio.',
+          codigo: 'MOTIVO_INVALIDO',
+        },
+        { status: 400 },
+      )
+    }
+
+    PREGUNTAS_FAQ_MOCK.splice(indice, 1)
+
+    return new HttpResponse(null, { status: 204 })
+  }),
 ]
