@@ -1,6 +1,7 @@
 import { http, HttpResponse } from 'msw'
 import type { Sesion } from '@/lib/types/dominio'
 import {
+  AUDITORIA_MOCK,
   CATEGORIAS_FAQ_MOCK,
   COCHERA_PRINCIPAL,
   PLAZAS_MOCK,
@@ -363,5 +364,31 @@ export const handlers = [
     PREGUNTAS_FAQ_MOCK.splice(indice, 1)
 
     return new HttpResponse(null, { status: 204 })
+  }),
+
+  // RFA10: audit log de solo lectura con filtros.
+  http.get('/api/auditoria', ({ request }) => {
+    const url = new URL(request.url)
+
+    const adminId = url.searchParams.get('adminId')
+    const accion = url.searchParams.get('accion')
+    const elemento = url.searchParams.get('elemento')
+    const desde = url.searchParams.get('desde')
+    const hasta = url.searchParams.get('hasta')
+
+    const items = AUDITORIA_MOCK.filter((entrada) => {
+      const coincideAdmin = !adminId || entrada.adminId === adminId
+      const coincideAccion = !accion || entrada.accion === accion
+      const coincideElemento =
+        !elemento || entrada.elemento.toLowerCase().includes(elemento.toLowerCase())
+
+      const fecha = new Date(entrada.ocurridoEn).getTime()
+      const coincideDesde = !desde || fecha >= new Date(desde).getTime()
+      const coincideHasta = !hasta || fecha <= new Date(hasta).getTime()
+
+      return coincideAdmin && coincideAccion && coincideElemento && coincideDesde && coincideHasta
+    })
+
+    return HttpResponse.json({ items })
   }),
 ]
