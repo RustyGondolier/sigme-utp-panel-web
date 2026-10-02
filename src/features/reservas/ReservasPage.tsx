@@ -22,8 +22,6 @@ export function ReservasPage() {
   const { avisar } = useAvisos()
   const ahora = useTic()
   const cargarReservas = useCallback(async () => {
-    setCargando(true)
-
     try {
       const respuesta = await listarReservas({
         cocheraId: filtroCochera,
@@ -84,7 +82,13 @@ export function ReservasPage() {
   ]
 
   useEffect(() => {
-    void cargarReservas()
+    const timeoutId = window.setTimeout(() => {
+      void cargarReservas()
+    }, 0)
+
+    return () => {
+      window.clearTimeout(timeoutId)
+    }
   }, [cargarReservas])
 
   useEffect(() => {
