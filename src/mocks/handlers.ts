@@ -181,4 +181,42 @@ export const handlers = [
 
     return HttpResponse.json(categoria)
   }),
+
+  http.delete('/api/faq/categorias/:id', ({ params, request }) => {
+    const { id } = params
+    const url = new URL(request.url)
+    const motivo = url.searchParams.get('motivo')
+
+    const indice = CATEGORIAS_FAQ_MOCK.findIndex((item) => item.id === id)
+
+    if (indice === -1) {
+      return HttpResponse.json(
+        {
+          message: 'La categoria no existe.',
+          codigo: 'CATEGORIA_NO_ENCONTRADA',
+        },
+        { status: 404 },
+      )
+    }
+
+    if (!motivo || motivo.trim().length < 10) {
+      return HttpResponse.json(
+        {
+          message: 'El motivo es obligatorio.',
+          codigo: 'MOTIVO_INVALIDO',
+        },
+        { status: 400 },
+      )
+    }
+
+    CATEGORIAS_FAQ_MOCK.splice(indice, 1)
+
+    for (let i = PREGUNTAS_FAQ_MOCK.length - 1; i >= 0; i -= 1) {
+      if (PREGUNTAS_FAQ_MOCK[i].categoriaId === id) {
+        PREGUNTAS_FAQ_MOCK.splice(i, 1)
+      }
+    }
+
+    return new HttpResponse(null, { status: 204 })
+  }),
 ]
