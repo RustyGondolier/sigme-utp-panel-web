@@ -11,6 +11,7 @@ import {
   eliminarCategoria,
   eliminarPregunta,
   obtenerFaq,
+  reordenarPreguntas,
 } from './faq.api'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 
@@ -36,6 +37,7 @@ export function FaqPage() {
   const [guardandoPregunta, setGuardandoPregunta] = useState(false)
   const [preguntaEliminando, setPreguntaEliminando] = useState<PreguntaFaq | null>(null)
   const [eliminandoPregunta, setEliminandoPregunta] = useState(false)
+  const [reordenandoPregunta, setReordenandoPregunta] = useState(false)
   const { avisar } = useAvisos()
 
   useEffect(() => {
@@ -350,6 +352,94 @@ export function FaqPage() {
                             </div>
 
                             <div className="flex gap-2">
+                              <Button
+                                variante="secundario"
+                                onClick={async () => {
+                                  const preguntasCategoria = preguntas
+                                    .filter((item) => item.categoriaId === pregunta.categoriaId)
+                                    .sort((a, b) => a.orden - b.orden)
+
+                                  const indice = preguntasCategoria.findIndex(
+                                    (item) => item.id === pregunta.id,
+                                  )
+
+                                  if (indice <= 0) return
+
+                                  const nuevoOrden = [...preguntasCategoria]
+                                  ;[nuevoOrden[indice - 1], nuevoOrden[indice]] = [
+                                    nuevoOrden[indice],
+                                    nuevoOrden[indice - 1],
+                                  ]
+
+                                  setReordenandoPregunta(true)
+
+                                  try {
+                                    await reordenarPreguntas(nuevoOrden.map((item) => item.id))
+
+                                    setPreguntas((actuales) =>
+                                      actuales.map((item) => {
+                                        const posicion = nuevoOrden.findIndex(
+                                          (ordenada) => ordenada.id === item.id,
+                                        )
+
+                                        return posicion >= 0
+                                          ? { ...item, orden: posicion + 1 }
+                                          : item
+                                      }),
+                                    )
+                                  } finally {
+                                    setReordenandoPregunta(false)
+                                  }
+                                }}
+                                disabled={reordenandoPregunta}
+                              >
+                                Subir
+                              </Button>
+
+                              <Button
+                                variante="secundario"
+                                onClick={async () => {
+                                  const preguntasCategoria = preguntas
+                                    .filter((item) => item.categoriaId === pregunta.categoriaId)
+                                    .sort((a, b) => a.orden - b.orden)
+
+                                  const indice = preguntasCategoria.findIndex(
+                                    (item) => item.id === pregunta.id,
+                                  )
+
+                                  if (indice === -1 || indice >= preguntasCategoria.length - 1)
+                                    return
+
+                                  const nuevoOrden = [...preguntasCategoria]
+                                  ;[nuevoOrden[indice], nuevoOrden[indice + 1]] = [
+                                    nuevoOrden[indice + 1],
+                                    nuevoOrden[indice],
+                                  ]
+
+                                  setReordenandoPregunta(true)
+
+                                  try {
+                                    await reordenarPreguntas(nuevoOrden.map((item) => item.id))
+
+                                    setPreguntas((actuales) =>
+                                      actuales.map((item) => {
+                                        const posicion = nuevoOrden.findIndex(
+                                          (ordenada) => ordenada.id === item.id,
+                                        )
+
+                                        return posicion >= 0
+                                          ? { ...item, orden: posicion + 1 }
+                                          : item
+                                      }),
+                                    )
+                                  } finally {
+                                    setReordenandoPregunta(false)
+                                  }
+                                }}
+                                disabled={reordenandoPregunta}
+                              >
+                                Bajar
+                              </Button>
                               <Button
                                 variante="secundario"
                                 onClick={() => {

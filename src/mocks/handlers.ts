@@ -262,6 +262,30 @@ export const handlers = [
     return HttpResponse.json(nuevaPregunta, { status: 201 })
   }),
 
+  http.patch('/api/faq/preguntas/orden', async ({ request }) => {
+    const { ids } = (await request.json()) as { ids?: string[] }
+
+    if (!ids || ids.length === 0) {
+      return HttpResponse.json(
+        {
+          message: 'Debes enviar al menos una pregunta.',
+          codigo: 'ORDEN_INVALIDO',
+        },
+        { status: 400 },
+      )
+    }
+
+    ids.forEach((id, indice) => {
+      const pregunta = PREGUNTAS_FAQ_MOCK.find((item) => item.id === id)
+
+      if (pregunta) {
+        pregunta.orden = indice + 1
+      }
+    })
+
+    return new HttpResponse(null, { status: 204 })
+  }),
+
   http.patch('/api/faq/preguntas/:id', async ({ params, request }) => {
     const { id } = params
     const { categoriaId, pregunta, respuesta } = (await request.json()) as {
@@ -337,30 +361,6 @@ export const handlers = [
     }
 
     PREGUNTAS_FAQ_MOCK.splice(indice, 1)
-
-    return new HttpResponse(null, { status: 204 })
-  }),
-
-  http.patch('/api/faq/preguntas/orden', async ({ request }) => {
-    const { ids } = (await request.json()) as { ids?: string[] }
-
-    if (!ids || ids.length === 0) {
-      return HttpResponse.json(
-        {
-          message: 'Debes enviar al menos una pregunta.',
-          codigo: 'ORDEN_INVALIDO',
-        },
-        { status: 400 },
-      )
-    }
-
-    ids.forEach((id, indice) => {
-      const pregunta = PREGUNTAS_FAQ_MOCK.find((item) => item.id === id)
-
-      if (pregunta) {
-        pregunta.orden = indice + 1
-      }
-    })
 
     return new HttpResponse(null, { status: 204 })
   }),
