@@ -1,6 +1,13 @@
 import { http, HttpResponse } from 'msw'
 import type { Sesion } from '@/lib/types/dominio'
-import { COCHERA_PRINCIPAL, PLAZAS_MOCK, RESERVAS_MOCK, SENSORES_MOCK } from '@/mocks/fixtures'
+import {
+  CATEGORIAS_FAQ_MOCK,
+  COCHERA_PRINCIPAL,
+  PLAZAS_MOCK,
+  PREGUNTAS_FAQ_MOCK,
+  RESERVAS_MOCK,
+  SENSORES_MOCK,
+} from '@/mocks/fixtures'
 
 /**
  * Contrato provisional. Cuando los microservicios esten definidos, este archivo
@@ -110,5 +117,13 @@ export const handlers = [
     reserva.estado = 'CANCELADA_POR_ADMIN'
 
     return HttpResponse.json(reserva)
+  }),
+
+  // RFA08: contenido de preguntas frecuentes.
+  http.get('/api/faq', () => {
+    return HttpResponse.json({
+      categorias: CATEGORIAS_FAQ_MOCK,
+      preguntas: PREGUNTAS_FAQ_MOCK,
+    })
   }),
 ]
