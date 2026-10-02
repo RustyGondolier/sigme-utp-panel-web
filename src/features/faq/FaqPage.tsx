@@ -9,6 +9,7 @@ import {
   crearCategoria,
   crearPregunta,
   eliminarCategoria,
+  eliminarPregunta,
   obtenerFaq,
 } from './faq.api'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
@@ -33,6 +34,8 @@ export function FaqPage() {
   const [textoPreguntaEditando, setTextoPreguntaEditando] = useState('')
   const [respuestaPreguntaEditando, setRespuestaPreguntaEditando] = useState('')
   const [guardandoPregunta, setGuardandoPregunta] = useState(false)
+  const [preguntaEliminando, setPreguntaEliminando] = useState<PreguntaFaq | null>(null)
+  const [eliminandoPregunta, setEliminandoPregunta] = useState(false)
   const { avisar } = useAvisos()
 
   useEffect(() => {
@@ -346,17 +349,26 @@ export function FaqPage() {
                               <p className="mt-1 text-sm text-slate-600">{pregunta.respuesta}</p>
                             </div>
 
-                            <Button
-                              variante="secundario"
-                              onClick={() => {
-                                setPreguntaEditandoId(pregunta.id)
-                                setCategoriaPreguntaEditando(pregunta.categoriaId)
-                                setTextoPreguntaEditando(pregunta.pregunta)
-                                setRespuestaPreguntaEditando(pregunta.respuesta)
-                              }}
-                            >
-                              Editar
-                            </Button>
+                            <div className="flex gap-2">
+                              <Button
+                                variante="secundario"
+                                onClick={() => {
+                                  setPreguntaEditandoId(pregunta.id)
+                                  setCategoriaPreguntaEditando(pregunta.categoriaId)
+                                  setTextoPreguntaEditando(pregunta.pregunta)
+                                  setRespuestaPreguntaEditando(pregunta.respuesta)
+                                }}
+                              >
+                                Editar
+                              </Button>
+
+                              <Button
+                                variante="peligro"
+                                onClick={() => setPreguntaEliminando(pregunta)}
+                              >
+                                Eliminar
+                              </Button>
+                            </div>
                           </div>
                         </>
                       )}
@@ -408,6 +420,38 @@ export function FaqPage() {
         }
         etiquetaConfirmar="Eliminar categoria"
         cargando={eliminandoCategoria}
+      />
+
+      <ConfirmDialog
+        abierto={Boolean(preguntaEliminando)}
+        onCerrar={() => setPreguntaEliminando(null)}
+        onConfirmar={async (motivo) => {
+          if (!preguntaEliminando) return
+
+          setEliminandoPregunta(true)
+
+          try {
+            await eliminarPregunta(preguntaEliminando.id, motivo)
+
+            setPreguntas((actuales) =>
+              actuales.filter((pregunta) => pregunta.id !== preguntaEliminando.id),
+            )
+
+            avisar('exito', 'Pregunta eliminada correctamente.')
+            setPreguntaEliminando(null)
+          } catch (error) {
+            avisar(
+              'error',
+              error instanceof Error ? error.message : 'No se pudo eliminar la pregunta.',
+            )
+          } finally {
+            setEliminandoPregunta(false)
+          }
+        }}
+        titulo="Eliminar pregunta"
+        descripcion="Esta accion eliminara la pregunta seleccionada."
+        etiquetaConfirmar="Eliminar pregunta"
+        cargando={eliminandoPregunta}
       />
     </div>
   )
