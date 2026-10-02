@@ -3,7 +3,8 @@ import type { CategoriaFaq, PreguntaFaq } from '@/lib/types/dominio'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { useAvisos } from '@/components/ui/avisos-context'
-import { actualizarCategoria, crearCategoria, obtenerFaq } from './faq.api'
+import { actualizarCategoria, crearCategoria, eliminarCategoria, obtenerFaq } from './faq.api'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 
 export function FaqPage() {
   const [categorias, setCategorias] = useState<CategoriaFaq[]>([])
@@ -14,6 +15,8 @@ export function FaqPage() {
   const [categoriaEditandoId, setCategoriaEditandoId] = useState<string | null>(null)
   const [nombreCategoriaEditando, setNombreCategoriaEditando] = useState('')
   const [guardandoCategoria, setGuardandoCategoria] = useState(false)
+  const [categoriaEliminando, setCategoriaEliminando] = useState<CategoriaFaq | null>(null)
+  const [eliminandoCategoria, setEliminandoCategoria] = useState(false)
   const { avisar } = useAvisos()
 
   useEffect(() => {
@@ -138,15 +141,21 @@ export function FaqPage() {
                 <div className="flex items-center justify-between gap-3">
                   <h2 className="text-lg font-semibold text-slate-900">{categoria.nombre}</h2>
 
-                  <Button
-                    variante="secundario"
-                    onClick={() => {
-                      setCategoriaEditandoId(categoria.id)
-                      setNombreCategoriaEditando(categoria.nombre)
-                    }}
-                  >
-                    Editar
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button
+                      variante="secundario"
+                      onClick={() => {
+                        setCategoriaEditandoId(categoria.id)
+                        setNombreCategoriaEditando(categoria.nombre)
+                      }}
+                    >
+                      Editar
+                    </Button>
+
+                    <Button variante="peligro" onClick={() => setCategoriaEliminando(categoria)}>
+                      Eliminar
+                    </Button>
+                  </div>
                 </div>
               )}
 
@@ -164,6 +173,49 @@ export function FaqPage() {
             </section>
           ))}
       </div>
+
+      <ConfirmDialog
+        abierto={Boolean(categoriaEliminando)}
+        onCerrar={() => setCategoriaEliminando(null)}
+        onConfirmar={async (motivo) => {
+          if (!categoriaEliminando) return
+
+          setEliminandoCategoria(true)
+
+          try {
+            await eliminarCategoria(categoriaEliminando.id, motivo)
+
+            setCategorias((actuales) =>
+              actuales.filter((categoria) => categoria.id !== categoriaEliminando.id),
+            )
+
+            setPreguntas((actuales) =>
+              actuales.filter((pregunta) => pregunta.categoriaId !== categoriaEliminando.id),
+            )
+
+            avisar('exito', 'Categoria eliminada correctamente.')
+            setCategoriaEliminando(null)
+          } catch (error) {
+            avisar(
+              'error',
+              error instanceof Error ? error.message : 'No se pudo eliminar la categoria.',
+            )
+          } finally {
+            setEliminandoCategoria(false)
+          }
+        }}
+        titulo="Eliminar categoria"
+        descripcion={
+          categoriaEliminando
+            ? `Se eliminaran tambien ${
+                preguntas.filter((pregunta) => pregunta.categoriaId === categoriaEliminando.id)
+                  .length
+              } preguntas asociadas.`
+            : undefined
+        }
+        etiquetaConfirmar="Eliminar categoria"
+        cargando={eliminandoCategoria}
+      />
     </div>
   )
 }
