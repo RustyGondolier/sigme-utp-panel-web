@@ -59,3 +59,56 @@ it('muestra el detalle y permite iniciar la cancelacion al seleccionar una reser
   expect(screen.getByText('Detalle de la reserva')).toBeInTheDocument()
   expect(screen.getByRole('button', { name: 'Cancelar reserva' })).toBeInTheDocument()
 })
+
+it('cancela una reserva cuando se confirma con un motivo valido', async () => {
+  const usuario = userEvent.setup()
+
+  vi.mocked(reservasApi.listarReservas).mockResolvedValue({
+    items: [
+      {
+        id: 'res-01',
+        usuarioId: 'usr-01',
+        codigoUsuario: '20240001',
+        nombreUsuario: 'Usuario prueba',
+        cocheraId: 'coch-01',
+        plazaId: 'pla-03',
+        codigoPlaza: 'A-03',
+        estado: 'ACTIVA',
+        solicitadaEn: new Date(Date.now() - 5 * 60_000).toISOString(),
+        venceEn: new Date(Date.now() + 25 * 60_000).toISOString(),
+      },
+    ],
+  })
+
+  vi.mocked(reservasApi.cancelarReserva).mockResolvedValue({
+    id: 'res-01',
+    usuarioId: 'usr-01',
+    codigoUsuario: '20240001',
+    nombreUsuario: 'Usuario prueba',
+    cocheraId: 'coch-01',
+    plazaId: 'pla-03',
+    codigoPlaza: 'A-03',
+    estado: 'CANCELADA_POR_ADMIN',
+    solicitadaEn: new Date(Date.now() - 5 * 60_000).toISOString(),
+    venceEn: new Date(Date.now() + 25 * 60_000).toISOString(),
+  })
+
+  render(
+    <AvisosProvider>
+      <ReservasPage />
+    </AvisosProvider>,
+  )
+
+  await usuario.click(await screen.findByText('Usuario prueba'))
+  await usuario.click(screen.getByRole('button', { name: 'Cancelar reserva' }))
+
+  await usuario.type(screen.getByLabelText(/motivo/i), 'Reserva duplicada detectada')
+
+  const botonesCancelar = screen.getAllByRole('button', {
+    name: 'Cancelar reserva',
+  })
+
+  await usuario.click(botonesCancelar[botonesCancelar.length - 1])
+
+  expect(reservasApi.cancelarReserva).toHaveBeenCalledWith('res-01', 'Reserva duplicada detectada')
+})
