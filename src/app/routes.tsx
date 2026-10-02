@@ -5,6 +5,7 @@ import { RequireAuth, RequireRole } from '@/app/guards/RequireAuth'
 import LoginPage from '@/features/auth/LoginPage'
 import AccesoDenegadoPage from '@/features/auth/AccesoDenegadoPage'
 import { ReservasPage } from '@/features/reservas/ReservasPage'
+import { FaqPage } from '@/features/faq/FaqPage'
 
 /**
  * Estructura de rutas segun RFA13.
@@ -54,10 +55,7 @@ export function AppRoutes() {
             path="/accesos"
             element={<PlaceholderPage rfa="RFA07" titulo="Historial de accesos" />}
           />
-          <Route
-            path="/contenido/faq"
-            element={<PlaceholderPage rfa="RFA08" titulo="Preguntas frecuentes" />}
-          />
+          <Route path="/contenido/faq" element={<FaqPage />} />
 
           {/* RFA13 caso E1: seccion restringida por rol. */}
           <Route element={<RequireRole roles={['ADMINISTRADOR']} />}>
