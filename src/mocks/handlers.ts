@@ -425,8 +425,9 @@ export const handlers = [
         !elemento || entrada.elemento.toLowerCase().includes(elemento.toLowerCase())
 
       const fecha = new Date(entrada.ocurridoEn).getTime()
-      const coincideDesde = !desde || fecha >= new Date(desde).getTime()
-      const coincideHasta = !hasta || fecha <= new Date(hasta).getTime()
+      const coincideDesde = !desde || fecha >= new Date(`${desde}T00:00:00`).getTime()
+
+      const coincideHasta = !hasta || fecha <= new Date(`${hasta}T23:59:59.999`).getTime()
 
       return coincideAdmin && coincideAccion && coincideElemento && coincideDesde && coincideHasta
     })
