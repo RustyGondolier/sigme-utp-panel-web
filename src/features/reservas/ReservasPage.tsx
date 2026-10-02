@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { DataTable, type Columna } from '@/components/ui/DataTable'
 import type { Reserva } from '@/lib/types/dominio'
-import { listarReservas } from './reservas.api'
+import { cancelarReserva, listarReservas } from './reservas.api'
 import { cuentaRegresiva, fechaHora } from '@/lib/formatters'
 import { useTic } from '@/lib/hooks/useTic'
 import { Button } from '@/components/ui/Button'
@@ -12,6 +12,7 @@ export function ReservasPage() {
   const [cargando, setCargando] = useState(true)
   const [reservaSeleccionada, setReservaSeleccionada] = useState<Reserva | null>(null)
   const [confirmarCancelacion, setConfirmarCancelacion] = useState(false)
+  const [cancelando, setCancelando] = useState(false)
   const ahora = useTic()
 
   const columnas: Columna<Reserva>[] = [
@@ -128,12 +129,28 @@ export function ReservasPage() {
       <ConfirmDialog
         abierto={confirmarCancelacion}
         onCerrar={() => setConfirmarCancelacion(false)}
-        onConfirmar={(motivo) => {
-          console.log('Cancelar reserva:', reservaSeleccionada?.id, motivo)
+        onConfirmar={async (motivo) => {
+          if (!reservaSeleccionada) return
+
+          setCancelando(true)
+
+          try {
+            await cancelarReserva(reservaSeleccionada.id, motivo)
+
+            setReservas((actuales) =>
+              actuales.filter((reserva) => reserva.id !== reservaSeleccionada.id),
+            )
+
+            setReservaSeleccionada(null)
+            setConfirmarCancelacion(false)
+          } finally {
+            setCancelando(false)
+          }
         }}
         titulo="Cancelar reserva"
         descripcion="Esta accion cancelara la reserva seleccionada."
         etiquetaConfirmar="Cancelar reserva"
+        cargando={cancelando}
       />
     </div>
   )
