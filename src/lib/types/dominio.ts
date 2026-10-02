@@ -24,6 +24,20 @@ export type EstadoAdmin = 'ACTIVO' | 'BLOQUEADO'
 
 export type TipoUsuario = 'ALUMNO' | 'DOCENTE' | 'ADMINISTRATIVO' | 'VISITANTE'
 
+export interface CategoriaFaq {
+  id: string
+  nombre: string
+  orden: number
+}
+
+export interface PreguntaFaq {
+  id: string
+  categoriaId: string
+  pregunta: string
+  respuesta: string
+  orden: number
+}
+
 export interface Cochera {
   id: string
   nombre: string
