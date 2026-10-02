@@ -5,6 +5,7 @@ import { Input, Select, Textarea } from '@/components/ui/Input'
 import { useAvisos } from '@/components/ui/avisos-context'
 import {
   actualizarCategoria,
+  actualizarPregunta,
   crearCategoria,
   crearPregunta,
   eliminarCategoria,
@@ -27,6 +28,11 @@ export function FaqPage() {
   const [textoPreguntaNueva, setTextoPreguntaNueva] = useState('')
   const [respuestaPreguntaNueva, setRespuestaPreguntaNueva] = useState('')
   const [creandoPregunta, setCreandoPregunta] = useState(false)
+  const [preguntaEditandoId, setPreguntaEditandoId] = useState<string | null>(null)
+  const [categoriaPreguntaEditando, setCategoriaPreguntaEditando] = useState('')
+  const [textoPreguntaEditando, setTextoPreguntaEditando] = useState('')
+  const [respuestaPreguntaEditando, setRespuestaPreguntaEditando] = useState('')
+  const [guardandoPregunta, setGuardandoPregunta] = useState(false)
   const { avisar } = useAvisos()
 
   useEffect(() => {
@@ -250,8 +256,110 @@ export function FaqPage() {
                   .sort((a, b) => a.orden - b.orden)
                   .map((pregunta) => (
                     <div key={pregunta.id} className="rounded-md border border-slate-100 p-3">
-                      <p className="font-medium text-slate-900">{pregunta.pregunta}</p>
-                      <p className="mt-1 text-sm text-slate-600">{pregunta.respuesta}</p>
+                      {preguntaEditandoId === pregunta.id ? (
+                        <div className="space-y-3">
+                          <Select
+                            value={categoriaPreguntaEditando}
+                            onChange={(e) => setCategoriaPreguntaEditando(e.target.value)}
+                            aria-label="Categoria de la pregunta"
+                          >
+                            {categorias
+                              .sort((a, b) => a.orden - b.orden)
+                              .map((categoria) => (
+                                <option key={categoria.id} value={categoria.id}>
+                                  {categoria.nombre}
+                                </option>
+                              ))}
+                          </Select>
+
+                          <Input
+                            value={textoPreguntaEditando}
+                            onChange={(e) => setTextoPreguntaEditando(e.target.value)}
+                            aria-label="Editar pregunta"
+                          />
+
+                          <Textarea
+                            value={respuestaPreguntaEditando}
+                            onChange={(e) => setRespuestaPreguntaEditando(e.target.value)}
+                            aria-label="Editar respuesta"
+                            rows={3}
+                          />
+
+                          <div className="flex gap-2">
+                            <Button
+                              onClick={async () => {
+                                if (
+                                  !categoriaPreguntaEditando ||
+                                  !textoPreguntaEditando.trim() ||
+                                  !respuestaPreguntaEditando.trim()
+                                ) {
+                                  return
+                                }
+
+                                setGuardandoPregunta(true)
+
+                                try {
+                                  const actualizada = await actualizarPregunta(pregunta.id, {
+                                    categoriaId: categoriaPreguntaEditando,
+                                    pregunta: textoPreguntaEditando,
+                                    respuesta: respuestaPreguntaEditando,
+                                  })
+
+                                  setPreguntas((actuales) =>
+                                    actuales.map((item) =>
+                                      item.id === actualizada.id ? actualizada : item,
+                                    ),
+                                  )
+
+                                  setPreguntaEditandoId(null)
+                                  avisar('exito', 'Pregunta actualizada correctamente.')
+                                } catch (error) {
+                                  avisar(
+                                    'error',
+                                    error instanceof Error
+                                      ? error.message
+                                      : 'No se pudo actualizar la pregunta.',
+                                  )
+                                } finally {
+                                  setGuardandoPregunta(false)
+                                }
+                              }}
+                              cargando={guardandoPregunta}
+                            >
+                              Guardar
+                            </Button>
+
+                            <Button
+                              variante="secundario"
+                              onClick={() => setPreguntaEditandoId(null)}
+                              disabled={guardandoPregunta}
+                            >
+                              Cancelar
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <>
+                          <div className="flex items-start justify-between gap-3">
+                            <div>
+                              <p className="font-medium text-slate-900">{pregunta.pregunta}</p>
+                              <p className="mt-1 text-sm text-slate-600">{pregunta.respuesta}</p>
+                            </div>
+
+                            <Button
+                              variante="secundario"
+                              onClick={() => {
+                                setPreguntaEditandoId(pregunta.id)
+                                setCategoriaPreguntaEditando(pregunta.categoriaId)
+                                setTextoPreguntaEditando(pregunta.pregunta)
+                                setRespuestaPreguntaEditando(pregunta.respuesta)
+                              }}
+                            >
+                              Editar
+                            </Button>
+                          </div>
+                        </>
+                      )}
                     </div>
                   ))}
               </div>
