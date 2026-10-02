@@ -1,9 +1,24 @@
-import { render, screen } from '@testing-library/react'
+import { act, render, screen } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ReservasPage } from './ReservasPage'
 import * as reservasApi from './reservas.api'
 import { AvisosProvider } from '@/components/ui/Avisos'
 import userEvent from '@testing-library/user-event'
+
+const { socketMock } = vi.hoisted(() => ({
+  socketMock: {
+    connected: false,
+    on: vi.fn(),
+    onAny: vi.fn(),
+    off: vi.fn(),
+    offAny: vi.fn(),
+    connect: vi.fn(),
+  },
+}))
+
+vi.mock('@/lib/socket', () => ({
+  socket: socketMock,
+}))
 
 vi.mock('./reservas.api')
 
@@ -111,4 +126,30 @@ it('cancela una reserva cuando se confirma con un motivo valido', async () => {
   await usuario.click(botonesCancelar[botonesCancelar.length - 1])
 
   expect(reservasApi.cancelarReserva).toHaveBeenCalledWith('res-01', 'Reserva duplicada detectada')
+})
+
+it('recarga reservas cuando recibe un evento del socket', async () => {
+  vi.mocked(reservasApi.listarReservas).mockResolvedValue({
+    items: [],
+  })
+
+  render(
+    <AvisosProvider>
+      <ReservasPage />
+    </AvisosProvider>,
+  )
+
+  await screen.findByText('No hay reservas activas.')
+
+  expect(socketMock.onAny).toHaveBeenCalledTimes(1)
+
+  const sincronizar = socketMock.onAny.mock.calls[0][0]
+
+  vi.mocked(reservasApi.listarReservas).mockClear()
+
+  await act(async () => {
+    await sincronizar()
+  })
+
+  expect(reservasApi.listarReservas).toHaveBeenCalledTimes(1)
 })

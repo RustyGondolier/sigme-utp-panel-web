@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { DataTable, type Columna } from '@/components/ui/DataTable'
 import type { Reserva } from '@/lib/types/dominio'
 import { cancelarReserva, listarReservas } from './reservas.api'
@@ -9,6 +9,7 @@ import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { useAvisos } from '@/components/ui/avisos-context'
 import { FilterBar } from '@/components/ui/SearchInput'
 import { Select } from '@/components/ui/Input'
+import { socket } from '@/lib/socket'
 
 export function ReservasPage() {
   const [reservas, setReservas] = useState<Reserva[]>([])
@@ -20,6 +21,25 @@ export function ReservasPage() {
   const [filtroEstado, setFiltroEstado] = useState('ACTIVA')
   const { avisar } = useAvisos()
   const ahora = useTic()
+  const cargarReservas = useCallback(async () => {
+    setCargando(true)
+
+    try {
+      const respuesta = await listarReservas({
+        cocheraId: filtroCochera,
+        estado: filtroEstado,
+      })
+
+      setReservas(respuesta.items)
+    } catch (error) {
+      avisar(
+        'error',
+        error instanceof Error ? error.message : 'No se pudieron cargar las reservas.',
+      )
+    } finally {
+      setCargando(false)
+    }
+  }, [avisar, filtroCochera, filtroEstado])
 
   const columnas: Columna<Reserva>[] = [
     {
@@ -64,13 +84,24 @@ export function ReservasPage() {
   ]
 
   useEffect(() => {
-    listarReservas({
-      cocheraId: filtroCochera,
-      estado: filtroEstado,
-    })
-      .then((respuesta) => setReservas(respuesta.items))
-      .finally(() => setCargando(false))
-  }, [filtroCochera, filtroEstado])
+    void cargarReservas()
+  }, [cargarReservas])
+
+  useEffect(() => {
+    const sincronizar = () => cargarReservas()
+
+    socket.on('connect', sincronizar)
+    socket.onAny(sincronizar)
+
+    if (!socket.connected) {
+      socket.connect()
+    }
+
+    return () => {
+      socket.off('connect', sincronizar)
+      socket.offAny(sincronizar)
+    }
+  }, [cargarReservas])
 
   return (
     <div className="space-y-6">
