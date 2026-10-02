@@ -1,6 +1,7 @@
 import type {
   CategoriaFaq,
   Cochera,
+  EntradaAuditoria,
   Plaza,
   PreguntaFaq,
   Reserva,
@@ -145,5 +146,32 @@ export const PREGUNTAS_FAQ_MOCK: PreguntaFaq[] = [
     pregunta: 'Como ingreso al estacionamiento?',
     respuesta: 'El acceso se realiza utilizando el sistema habilitado por la universidad.',
     orden: 1,
+  },
+]
+
+export const AUDITORIA_MOCK: EntradaAuditoria[] = [
+  {
+    id: 'aud-01',
+    adminId: 'adm-001',
+    adminNombre: 'Administrador',
+    accion: 'CANCELAR_RESERVA',
+    elemento: 'Reserva res-01',
+    ocurridoEn: new Date(Date.now() - 15 * 60_000).toISOString(),
+  },
+  {
+    id: 'aud-02',
+    adminId: 'adm-001',
+    adminNombre: 'Administrador',
+    accion: 'CREAR_CATEGORIA_FAQ',
+    elemento: 'Categoria Reservas',
+    ocurridoEn: new Date(Date.now() - 60 * 60_000).toISOString(),
+  },
+  {
+    id: 'aud-03',
+    adminId: 'adm-001',
+    adminNombre: 'Administrador',
+    accion: 'EDITAR_PREGUNTA_FAQ',
+    elemento: 'Pregunta faq-01',
+    ocurridoEn: new Date(Date.now() - 2 * 60 * 60_000).toISOString(),
   },
 ]
