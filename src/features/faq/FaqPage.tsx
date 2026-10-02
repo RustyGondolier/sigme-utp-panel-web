@@ -1,9 +1,15 @@
 import { useEffect, useState } from 'react'
 import type { CategoriaFaq, PreguntaFaq } from '@/lib/types/dominio'
 import { Button } from '@/components/ui/Button'
-import { Input } from '@/components/ui/Input'
+import { Input, Select, Textarea } from '@/components/ui/Input'
 import { useAvisos } from '@/components/ui/avisos-context'
-import { actualizarCategoria, crearCategoria, eliminarCategoria, obtenerFaq } from './faq.api'
+import {
+  actualizarCategoria,
+  crearCategoria,
+  crearPregunta,
+  eliminarCategoria,
+  obtenerFaq,
+} from './faq.api'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 
 export function FaqPage() {
@@ -17,6 +23,10 @@ export function FaqPage() {
   const [guardandoCategoria, setGuardandoCategoria] = useState(false)
   const [categoriaEliminando, setCategoriaEliminando] = useState<CategoriaFaq | null>(null)
   const [eliminandoCategoria, setEliminandoCategoria] = useState(false)
+  const [categoriaPreguntaNueva, setCategoriaPreguntaNueva] = useState('')
+  const [textoPreguntaNueva, setTextoPreguntaNueva] = useState('')
+  const [respuestaPreguntaNueva, setRespuestaPreguntaNueva] = useState('')
+  const [creandoPregunta, setCreandoPregunta] = useState(false)
   const { avisar } = useAvisos()
 
   useEffect(() => {
@@ -74,6 +84,81 @@ export function FaqPage() {
           cargando={creandoCategoria}
         >
           Nueva categoria
+        </Button>
+      </div>
+
+      <div className="space-y-3 rounded-lg border border-slate-200 bg-white p-4">
+        <h2 className="text-lg font-semibold text-slate-900">Nueva pregunta</h2>
+
+        <Select
+          value={categoriaPreguntaNueva}
+          onChange={(e) => setCategoriaPreguntaNueva(e.target.value)}
+          aria-label="Categoria de la nueva pregunta"
+        >
+          <option value="">Selecciona una categoria</option>
+          {categorias
+            .sort((a, b) => a.orden - b.orden)
+            .map((categoria) => (
+              <option key={categoria.id} value={categoria.id}>
+                {categoria.nombre}
+              </option>
+            ))}
+        </Select>
+
+        <Input
+          value={textoPreguntaNueva}
+          onChange={(e) => setTextoPreguntaNueva(e.target.value)}
+          placeholder="Pregunta"
+          aria-label="Nueva pregunta"
+        />
+
+        <Textarea
+          value={respuestaPreguntaNueva}
+          onChange={(e) => setRespuestaPreguntaNueva(e.target.value)}
+          placeholder="Respuesta"
+          aria-label="Respuesta de la nueva pregunta"
+          rows={3}
+        />
+
+        <Button
+          onClick={async () => {
+            if (
+              !categoriaPreguntaNueva ||
+              !textoPreguntaNueva.trim() ||
+              !respuestaPreguntaNueva.trim()
+            ) {
+              return
+            }
+
+            setCreandoPregunta(true)
+
+            try {
+              const nueva = await crearPregunta({
+                categoriaId: categoriaPreguntaNueva,
+                pregunta: textoPreguntaNueva,
+                respuesta: respuestaPreguntaNueva,
+              })
+
+              setPreguntas((actuales) => [...actuales, nueva])
+              setCategoriaPreguntaNueva('')
+              setTextoPreguntaNueva('')
+              setRespuestaPreguntaNueva('')
+              avisar('exito', 'Pregunta creada correctamente.')
+            } catch (error) {
+              avisar(
+                'error',
+                error instanceof Error ? error.message : 'No se pudo crear la pregunta.',
+              )
+            } finally {
+              setCreandoPregunta(false)
+            }
+          }}
+          disabled={
+            !categoriaPreguntaNueva || !textoPreguntaNueva.trim() || !respuestaPreguntaNueva.trim()
+          }
+          cargando={creandoPregunta}
+        >
+          Crear pregunta
         </Button>
       </div>
 
