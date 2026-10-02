@@ -42,9 +42,7 @@ describe('FaqPage', () => {
   })
 })
 
-it('reordena preguntas dentro de una categoria', async () => {
-  const usuario = userEvent.setup()
-
+it('muestra controles de arrastre para las preguntas', async () => {
   vi.mocked(faqApi.obtenerFaq).mockResolvedValue({
     categorias: [
       {
@@ -71,8 +69,6 @@ it('reordena preguntas dentro de una categoria', async () => {
     ],
   })
 
-  vi.mocked(faqApi.reordenarPreguntas).mockResolvedValue(undefined)
-
   render(
     <AvisosProvider>
       <FaqPage />
@@ -81,9 +77,5 @@ it('reordena preguntas dentro de una categoria', async () => {
 
   await screen.findByText('Primera pregunta')
 
-  const botonesBajar = screen.getAllByRole('button', { name: 'Bajar' })
-
-  await usuario.click(botonesBajar[0])
-
-  expect(faqApi.reordenarPreguntas).toHaveBeenCalledWith(['faq-02', 'faq-01'])
+  expect(screen.getAllByRole('button', { name: 'Arrastrar pregunta' })).toHaveLength(2)
 })

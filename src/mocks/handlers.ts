@@ -30,6 +30,40 @@ const sesionAdmin: Sesion = {
   expiraEn: new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString(),
 }
 
+const FAQ_ORDEN_STORAGE_KEY = 'sigme-faq-orden'
+
+function guardarOrdenFaq(categoriaId: string, ids: string[]) {
+  if (typeof localStorage === 'undefined') return
+
+  const guardado = localStorage.getItem(FAQ_ORDEN_STORAGE_KEY)
+
+  const ordenes = guardado ? (JSON.parse(guardado) as Record<string, string[]>) : {}
+
+  ordenes[categoriaId] = ids
+
+  localStorage.setItem(FAQ_ORDEN_STORAGE_KEY, JSON.stringify(ordenes))
+}
+
+function aplicarOrdenFaqGuardado() {
+  if (typeof localStorage === 'undefined') return
+
+  const guardado = localStorage.getItem(FAQ_ORDEN_STORAGE_KEY)
+
+  if (!guardado) return
+
+  const ordenes = JSON.parse(guardado) as Record<string, string[]>
+
+  Object.values(ordenes).forEach((ids) => {
+    ids.forEach((id, indice) => {
+      const pregunta = PREGUNTAS_FAQ_MOCK.find((item) => item.id === id)
+
+      if (pregunta) {
+        pregunta.orden = indice + 1
+      }
+    })
+  })
+}
+
 export const handlers = [
   // RFA09: login. El limite de 5 intentos (RNF07) lo lleva el servidor; aca se
   // simula solo el caso de exito y el de credenciales invalidas.
@@ -122,6 +156,8 @@ export const handlers = [
 
   // RFA08: contenido de preguntas frecuentes.
   http.get('/api/faq', () => {
+    aplicarOrdenFaqGuardado()
+
     return HttpResponse.json({
       categorias: CATEGORIAS_FAQ_MOCK,
       preguntas: PREGUNTAS_FAQ_MOCK,
@@ -283,6 +319,12 @@ export const handlers = [
         pregunta.orden = indice + 1
       }
     })
+
+    const primeraPregunta = PREGUNTAS_FAQ_MOCK.find((item) => item.id === ids[0])
+
+    if (primeraPregunta) {
+      guardarOrdenFaq(primeraPregunta.categoriaId, ids)
+    }
 
     return new HttpResponse(null, { status: 204 })
   }),

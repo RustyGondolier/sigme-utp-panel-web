@@ -1,4 +1,7 @@
 import { useEffect, useState } from 'react'
+import { DndContext, closestCenter, type DragEndEvent } from '@dnd-kit/core'
+import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 import type { CategoriaFaq, PreguntaFaq } from '@/lib/types/dominio'
 import { Button } from '@/components/ui/Button'
 import { Input, Select, Textarea } from '@/components/ui/Input'
@@ -14,6 +17,43 @@ import {
   reordenarPreguntas,
 } from './faq.api'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
+import type { ReactNode } from 'react'
+import { calcularNuevoOrdenFaq } from './faq.reorder'
+
+interface PreguntaSortableProps {
+  id: string
+  children: ReactNode
+}
+
+function PreguntaSortable({ id, children }: PreguntaSortableProps) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id,
+  })
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  }
+
+  return (
+    <div ref={setNodeRef} style={style}>
+      <div className="mb-2 flex justify-end">
+        <button
+          type="button"
+          {...attributes}
+          {...listeners}
+          aria-label="Arrastrar pregunta"
+          className="cursor-grab rounded px-2 py-1 text-sm text-slate-500 hover:bg-slate-100 active:cursor-grabbing"
+        >
+          Arrastrar
+        </button>
+      </div>
+
+      {children}
+    </div>
+  )
+}
 
 export function FaqPage() {
   const [categorias, setCategorias] = useState<CategoriaFaq[]>([])
@@ -37,8 +77,33 @@ export function FaqPage() {
   const [guardandoPregunta, setGuardandoPregunta] = useState(false)
   const [preguntaEliminando, setPreguntaEliminando] = useState<PreguntaFaq | null>(null)
   const [eliminandoPregunta, setEliminandoPregunta] = useState(false)
-  const [reordenandoPregunta, setReordenandoPregunta] = useState(false)
+  const [, setReordenandoPregunta] = useState(false)
   const { avisar } = useAvisos()
+  async function manejarFinArrastre(event: DragEndEvent) {
+    const { active, over } = event
+
+    if (!over || active.id === over.id) return
+
+    const idsNuevoOrden = calcularNuevoOrdenFaq(preguntas, String(active.id), String(over.id))
+
+    if (!idsNuevoOrden) return
+
+    setReordenandoPregunta(true)
+
+    try {
+      await reordenarPreguntas(idsNuevoOrden)
+
+      setPreguntas((actuales) =>
+        actuales.map((pregunta) => {
+          const posicion = idsNuevoOrden.findIndex((id) => id === pregunta.id)
+
+          return posicion >= 0 ? { ...pregunta, orden: posicion + 1 } : pregunta
+        }),
+      )
+    } finally {
+      setReordenandoPregunta(false)
+    }
+  }
 
   useEffect(() => {
     obtenerFaq()
@@ -255,216 +320,144 @@ export function FaqPage() {
                 </div>
               )}
 
-              <div className="mt-3 space-y-3">
-                {preguntas
-                  .filter((pregunta) => pregunta.categoriaId === categoria.id)
-                  .sort((a, b) => a.orden - b.orden)
-                  .map((pregunta) => (
-                    <div key={pregunta.id} className="rounded-md border border-slate-100 p-3">
-                      {preguntaEditandoId === pregunta.id ? (
-                        <div className="space-y-3">
-                          <Select
-                            value={categoriaPreguntaEditando}
-                            onChange={(e) => setCategoriaPreguntaEditando(e.target.value)}
-                            aria-label="Categoria de la pregunta"
-                          >
-                            {categorias
-                              .sort((a, b) => a.orden - b.orden)
-                              .map((categoria) => (
-                                <option key={categoria.id} value={categoria.id}>
-                                  {categoria.nombre}
-                                </option>
-                              ))}
-                          </Select>
-
-                          <Input
-                            value={textoPreguntaEditando}
-                            onChange={(e) => setTextoPreguntaEditando(e.target.value)}
-                            aria-label="Editar pregunta"
-                          />
-
-                          <Textarea
-                            value={respuestaPreguntaEditando}
-                            onChange={(e) => setRespuestaPreguntaEditando(e.target.value)}
-                            aria-label="Editar respuesta"
-                            rows={3}
-                          />
-
-                          <div className="flex gap-2">
-                            <Button
-                              onClick={async () => {
-                                if (
-                                  !categoriaPreguntaEditando ||
-                                  !textoPreguntaEditando.trim() ||
-                                  !respuestaPreguntaEditando.trim()
-                                ) {
-                                  return
-                                }
-
-                                setGuardandoPregunta(true)
-
-                                try {
-                                  const actualizada = await actualizarPregunta(pregunta.id, {
-                                    categoriaId: categoriaPreguntaEditando,
-                                    pregunta: textoPreguntaEditando,
-                                    respuesta: respuestaPreguntaEditando,
-                                  })
-
-                                  setPreguntas((actuales) =>
-                                    actuales.map((item) =>
-                                      item.id === actualizada.id ? actualizada : item,
-                                    ),
-                                  )
-
-                                  setPreguntaEditandoId(null)
-                                  avisar('exito', 'Pregunta actualizada correctamente.')
-                                } catch (error) {
-                                  avisar(
-                                    'error',
-                                    error instanceof Error
-                                      ? error.message
-                                      : 'No se pudo actualizar la pregunta.',
-                                  )
-                                } finally {
-                                  setGuardandoPregunta(false)
-                                }
-                              }}
-                              cargando={guardandoPregunta}
-                            >
-                              Guardar
-                            </Button>
-
-                            <Button
-                              variante="secundario"
-                              onClick={() => setPreguntaEditandoId(null)}
-                              disabled={guardandoPregunta}
-                            >
-                              Cancelar
-                            </Button>
-                          </div>
-                        </div>
-                      ) : (
-                        <>
-                          <div className="flex items-start justify-between gap-3">
-                            <div>
-                              <p className="font-medium text-slate-900">{pregunta.pregunta}</p>
-                              <p className="mt-1 text-sm text-slate-600">{pregunta.respuesta}</p>
-                            </div>
-
-                            <div className="flex gap-2">
-                              <Button
-                                variante="secundario"
-                                onClick={async () => {
-                                  const preguntasCategoria = preguntas
-                                    .filter((item) => item.categoriaId === pregunta.categoriaId)
+              <DndContext collisionDetection={closestCenter} onDragEnd={manejarFinArrastre}>
+                <SortableContext
+                  items={preguntas
+                    .filter((pregunta) => pregunta.categoriaId === categoria.id)
+                    .sort((a, b) => a.orden - b.orden)
+                    .map((pregunta) => pregunta.id)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  <div className="mt-3 space-y-3">
+                    {preguntas
+                      .filter((pregunta) => pregunta.categoriaId === categoria.id)
+                      .sort((a, b) => a.orden - b.orden)
+                      .map((pregunta) => (
+                        <PreguntaSortable key={pregunta.id} id={pregunta.id}>
+                          <div className="rounded-md border border-slate-100 p-3">
+                            {preguntaEditandoId === pregunta.id ? (
+                              <div className="space-y-3">
+                                <Select
+                                  value={categoriaPreguntaEditando}
+                                  onChange={(e) => setCategoriaPreguntaEditando(e.target.value)}
+                                  aria-label="Categoria de la pregunta"
+                                >
+                                  {categorias
                                     .sort((a, b) => a.orden - b.orden)
+                                    .map((categoria) => (
+                                      <option key={categoria.id} value={categoria.id}>
+                                        {categoria.nombre}
+                                      </option>
+                                    ))}
+                                </Select>
 
-                                  const indice = preguntasCategoria.findIndex(
-                                    (item) => item.id === pregunta.id,
-                                  )
+                                <Input
+                                  value={textoPreguntaEditando}
+                                  onChange={(e) => setTextoPreguntaEditando(e.target.value)}
+                                  aria-label="Editar pregunta"
+                                />
 
-                                  if (indice <= 0) return
+                                <Textarea
+                                  value={respuestaPreguntaEditando}
+                                  onChange={(e) => setRespuestaPreguntaEditando(e.target.value)}
+                                  aria-label="Editar respuesta"
+                                  rows={3}
+                                />
 
-                                  const nuevoOrden = [...preguntasCategoria]
-                                  ;[nuevoOrden[indice - 1], nuevoOrden[indice]] = [
-                                    nuevoOrden[indice],
-                                    nuevoOrden[indice - 1],
-                                  ]
+                                <div className="flex gap-2">
+                                  <Button
+                                    onClick={async () => {
+                                      if (
+                                        !categoriaPreguntaEditando ||
+                                        !textoPreguntaEditando.trim() ||
+                                        !respuestaPreguntaEditando.trim()
+                                      ) {
+                                        return
+                                      }
 
-                                  setReordenandoPregunta(true)
+                                      setGuardandoPregunta(true)
 
-                                  try {
-                                    await reordenarPreguntas(nuevoOrden.map((item) => item.id))
+                                      try {
+                                        const actualizada = await actualizarPregunta(pregunta.id, {
+                                          categoriaId: categoriaPreguntaEditando,
+                                          pregunta: textoPreguntaEditando,
+                                          respuesta: respuestaPreguntaEditando,
+                                        })
 
-                                    setPreguntas((actuales) =>
-                                      actuales.map((item) => {
-                                        const posicion = nuevoOrden.findIndex(
-                                          (ordenada) => ordenada.id === item.id,
+                                        setPreguntas((actuales) =>
+                                          actuales.map((item) =>
+                                            item.id === actualizada.id ? actualizada : item,
+                                          ),
                                         )
 
-                                        return posicion >= 0
-                                          ? { ...item, orden: posicion + 1 }
-                                          : item
-                                      }),
-                                    )
-                                  } finally {
-                                    setReordenandoPregunta(false)
-                                  }
-                                }}
-                                disabled={reordenandoPregunta}
-                              >
-                                Subir
-                              </Button>
-
-                              <Button
-                                variante="secundario"
-                                onClick={async () => {
-                                  const preguntasCategoria = preguntas
-                                    .filter((item) => item.categoriaId === pregunta.categoriaId)
-                                    .sort((a, b) => a.orden - b.orden)
-
-                                  const indice = preguntasCategoria.findIndex(
-                                    (item) => item.id === pregunta.id,
-                                  )
-
-                                  if (indice === -1 || indice >= preguntasCategoria.length - 1)
-                                    return
-
-                                  const nuevoOrden = [...preguntasCategoria]
-                                  ;[nuevoOrden[indice], nuevoOrden[indice + 1]] = [
-                                    nuevoOrden[indice + 1],
-                                    nuevoOrden[indice],
-                                  ]
-
-                                  setReordenandoPregunta(true)
-
-                                  try {
-                                    await reordenarPreguntas(nuevoOrden.map((item) => item.id))
-
-                                    setPreguntas((actuales) =>
-                                      actuales.map((item) => {
-                                        const posicion = nuevoOrden.findIndex(
-                                          (ordenada) => ordenada.id === item.id,
+                                        setPreguntaEditandoId(null)
+                                        avisar('exito', 'Pregunta actualizada correctamente.')
+                                      } catch (error) {
+                                        avisar(
+                                          'error',
+                                          error instanceof Error
+                                            ? error.message
+                                            : 'No se pudo actualizar la pregunta.',
                                         )
+                                      } finally {
+                                        setGuardandoPregunta(false)
+                                      }
+                                    }}
+                                    cargando={guardandoPregunta}
+                                  >
+                                    Guardar
+                                  </Button>
 
-                                        return posicion >= 0
-                                          ? { ...item, orden: posicion + 1 }
-                                          : item
-                                      }),
-                                    )
-                                  } finally {
-                                    setReordenandoPregunta(false)
-                                  }
-                                }}
-                                disabled={reordenandoPregunta}
-                              >
-                                Bajar
-                              </Button>
-                              <Button
-                                variante="secundario"
-                                onClick={() => {
-                                  setPreguntaEditandoId(pregunta.id)
-                                  setCategoriaPreguntaEditando(pregunta.categoriaId)
-                                  setTextoPreguntaEditando(pregunta.pregunta)
-                                  setRespuestaPreguntaEditando(pregunta.respuesta)
-                                }}
-                              >
-                                Editar
-                              </Button>
+                                  <Button
+                                    variante="secundario"
+                                    onClick={() => setPreguntaEditandoId(null)}
+                                    disabled={guardandoPregunta}
+                                  >
+                                    Cancelar
+                                  </Button>
+                                </div>
+                              </div>
+                            ) : (
+                              <>
+                                <div className="flex items-start justify-between gap-3">
+                                  <div>
+                                    <p className="font-medium text-slate-900">
+                                      {pregunta.pregunta}
+                                    </p>
+                                    <p className="mt-1 text-sm text-slate-600">
+                                      {pregunta.respuesta}
+                                    </p>
+                                  </div>
 
-                              <Button
-                                variante="peligro"
-                                onClick={() => setPreguntaEliminando(pregunta)}
-                              >
-                                Eliminar
-                              </Button>
-                            </div>
+                                  <div className="flex gap-2">
+                                    <Button
+                                      variante="secundario"
+                                      onClick={() => {
+                                        setPreguntaEditandoId(pregunta.id)
+                                        setCategoriaPreguntaEditando(pregunta.categoriaId)
+                                        setTextoPreguntaEditando(pregunta.pregunta)
+                                        setRespuestaPreguntaEditando(pregunta.respuesta)
+                                      }}
+                                    >
+                                      Editar
+                                    </Button>
+
+                                    <Button
+                                      variante="peligro"
+                                      onClick={() => setPreguntaEliminando(pregunta)}
+                                    >
+                                      Eliminar
+                                    </Button>
+                                  </div>
+                                </div>
+                              </>
+                            )}
                           </div>
-                        </>
-                      )}
-                    </div>
-                  ))}
-              </div>
+                        </PreguntaSortable>
+                      ))}
+                  </div>
+                </SortableContext>
+              </DndContext>
             </section>
           ))}
       </div>
