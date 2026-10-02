@@ -150,4 +150,35 @@ export const handlers = [
 
     return HttpResponse.json(nuevaCategoria, { status: 201 })
   }),
+
+  http.patch('/api/faq/categorias/:id', async ({ params, request }) => {
+    const { id } = params
+    const { nombre } = (await request.json()) as { nombre?: string }
+
+    const categoria = CATEGORIAS_FAQ_MOCK.find((item) => item.id === id)
+
+    if (!categoria) {
+      return HttpResponse.json(
+        {
+          message: 'La categoria no existe.',
+          codigo: 'CATEGORIA_NO_ENCONTRADA',
+        },
+        { status: 404 },
+      )
+    }
+
+    if (!nombre?.trim()) {
+      return HttpResponse.json(
+        {
+          message: 'El nombre de la categoria es obligatorio.',
+          codigo: 'NOMBRE_REQUERIDO',
+        },
+        { status: 400 },
+      )
+    }
+
+    categoria.nombre = nombre.trim()
+
+    return HttpResponse.json(categoria)
+  }),
 ]
