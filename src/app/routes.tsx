@@ -7,6 +7,8 @@ import AccesoDenegadoPage from '@/features/auth/AccesoDenegadoPage'
 import { UsuariosPage } from '@/features/usuarios/UsuariosPage'
 import { UsuarioDetallePage } from '@/features/usuarios/UsuarioDetallePage'
 import { AccesosPage } from '@/features/accesos/AccesosPage'
+import { SensoresPage } from '@/features/sensores/SensoresPage'
+import { MonitorPage } from '@/features/monitor/MonitorPage'
 import { CuentasAdminPage } from '@/features/cuentas-admin/CuentasAdminPage'
 
 /**
@@ -38,18 +40,12 @@ export function AppRoutes() {
           <Route path="/" element={<PlaceholderPage rfa="RFA11" titulo="Dashboard" />} />
           <Route path="/usuarios" element={<UsuariosPage />} />
           <Route path="/usuarios/:id" element={<UsuarioDetallePage />} />
-          <Route
-            path="/monitor"
-            element={<PlaceholderPage rfa="RFA03" titulo="Monitoreo del estacionamiento" />}
-          />
+          <Route path="/monitor" element={<MonitorPage />} />
           <Route
             path="/reservas"
             element={<PlaceholderPage rfa="RFA05" titulo="Reservas activas" />}
           />
-          <Route
-            path="/sensores"
-            element={<PlaceholderPage rfa="RFA04" titulo="Gestion de sensores" />}
-          />
+          <Route path="/sensores" element={<SensoresPage />} />
           <Route path="/accesos" element={<AccesosPage />} />
           <Route
             path="/contenido/faq"
