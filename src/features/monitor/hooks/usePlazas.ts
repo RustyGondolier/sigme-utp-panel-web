@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { socket } from '@/lib/socket'
+import type { EstadoConexion } from '@/features/sensores/types/sensor.types'
 import { MOCK_PLAZAS } from '../mocks/plazas.mock'
 import type { EventoPlazaCambiada, FiltrosPlaza, Plaza } from '../types/plaza.types'
 
@@ -27,6 +28,7 @@ export function usePlazas() {
   // Sin carga real todavía; pasará a ser `consulta.isLoading` al conectar la API.
   const [isLoading] = useState(false)
   const [filtros, setFiltros] = useState<FiltrosPlaza>(FILTROS_INICIALES)
+  const [estadoConexion, setEstadoConexion] = useState<EstadoConexion>('DESCONECTADO')
 
   const sotanos = useMemo(() => [...new Set(plazas.map((p) => p.sotano))].sort(), [plazas])
 
@@ -77,14 +79,38 @@ export function usePlazas() {
       actualizarPlaza(id, ocupante ? { estado, ocupante } : { estado })
     }
 
+    const alConectar = () => setEstadoConexion('CONECTADO')
+    const alDesconectar = () => setEstadoConexion('DESCONECTADO')
+    const alFallar = () => setEstadoConexion('REINTENTANDO')
+    const alAgotarIntentos = () => setEstadoConexion('DESCONECTADO')
+
     socket.on('plaza:estado_cambiado', alCambiarEstado)
+    socket.on('connect', alConectar)
+    socket.on('disconnect', alDesconectar)
+    socket.on('connect_error', alFallar)
+    socket.io.on('reconnect_attempt', alFallar)
+    socket.io.on('reconnect_failed', alAgotarIntentos)
     socket.connect()
 
     return () => {
       socket.off('plaza:estado_cambiado', alCambiarEstado)
+      socket.off('connect', alConectar)
+      socket.off('disconnect', alDesconectar)
+      socket.off('connect_error', alFallar)
+      socket.io.off('reconnect_attempt', alFallar)
+      socket.io.off('reconnect_failed', alAgotarIntentos)
       socket.disconnect()
     }
   }, [actualizarPlaza])
+
+  /**
+   * Solo desarrollo: entrega un evento a los listeners ya registrados en el
+   * socket, como si lo hubiera emitido el servidor. En produccion no hace nada.
+   */
+  const simularEvento = useCallback((evento: EventoPlazaCambiada) => {
+    if (!import.meta.env.DEV) return
+    socket.listeners('plaza:estado_cambiado').forEach((fn) => fn(evento))
+  }, [])
 
   return {
     plazas,
@@ -92,6 +118,9 @@ export function usePlazas() {
     sotanos,
     isLoading,
     filtros,
+    estadoConexion,
+    conectado: estadoConexion === 'CONECTADO',
+    simularEvento,
     actualizarFiltros,
     limpiarFiltros,
     obtenerPlaza,

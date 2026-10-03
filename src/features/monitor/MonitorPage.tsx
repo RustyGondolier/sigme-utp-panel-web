@@ -1,11 +1,36 @@
 import { useState } from 'react'
 import { Car } from 'lucide-react'
 import { Card, EmptyState } from '@/components/ui'
+import { MonitorDevPanel } from './components/MonitorDevPanel'
 import { PlazaCard } from './components/PlazaCard'
 import { PlazaDetailModal } from './components/PlazaDetailModal'
 import { PlazaFiltros } from './components/PlazaFiltros'
 import { usePlazas } from './hooks/usePlazas'
-import { CONFIG_ESTADO_PLAZA, ESTADOS_PLAZA } from './plazas.etiquetas'
+import type { EstadoConexion } from '@/features/sensores/types/sensor.types'
+
+const CONEXION_WS: Record<
+  EstadoConexion,
+  { etiqueta: string; clases: string; punto: string; animado: boolean }
+> = {
+  CONECTADO: {
+    etiqueta: 'Conectado',
+    clases: 'bg-emerald-50 text-emerald-700 ring-emerald-600/20',
+    punto: 'bg-emerald-500',
+    animado: true,
+  },
+  REINTENTANDO: {
+    etiqueta: 'Reintentando…',
+    clases: 'bg-amber-50 text-amber-700 ring-amber-600/20',
+    punto: 'bg-amber-500',
+    animado: false,
+  },
+  DESCONECTADO: {
+    etiqueta: 'Desconectado',
+    clases: 'bg-red-50 text-red-700 ring-red-600/20',
+    punto: 'bg-red-500',
+    animado: false,
+  },
+}
 
 /**
  * Monitoreo del estacionamiento (RFA03).
@@ -21,6 +46,8 @@ export function MonitorPage() {
     sotanos,
     isLoading,
     filtros,
+    estadoConexion,
+    simularEvento,
     actualizarFiltros,
     limpiarFiltros,
     obtenerPlaza,
@@ -46,18 +73,32 @@ export function MonitorPage() {
         </p>
       </div>
 
-      <div className="flex flex-wrap items-center gap-2 text-xs font-medium">
-        <span className="rounded-full bg-slate-800 px-2.5 py-1 text-white">
-          Total: {plazas.length}
-        </span>
-        {ESTADOS_PLAZA.map((e) => (
-          <span
-            key={e}
-            className={`rounded-full px-2.5 py-1 ring-1 ring-inset ${CONFIG_ESTADO_PLAZA[e].insignia}`}
-          >
-            {CONFIG_ESTADO_PLAZA[e].plural}: {conteo[e]}
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h2 className="text-lg font-semibold text-slate-800">
+            Monitoreo del estacionamiento (RFA03)
+          </h2>
+          <p className="text-sm text-slate-500">
+            Estado de cada plaza por sótano y zona. Selecciona una plaza para ver su detalle.
+          </p>
+        </div>
+        <span
+          role="status"
+          aria-label={`WebSocket ${CONEXION_WS[estadoConexion].etiqueta.toLowerCase()}`}
+          className={`inline-flex items-center gap-2 rounded-full px-2.5 py-1 text-xs font-medium ring-1 ring-inset ${CONEXION_WS[estadoConexion].clases}`}
+        >
+          <span className="relative flex size-2">
+            {CONEXION_WS[estadoConexion].animado && (
+              <span
+                className={`absolute inline-flex h-full w-full animate-ping rounded-full opacity-75 ${CONEXION_WS[estadoConexion].punto}`}
+              />
+            )}
+            <span
+              className={`relative inline-flex size-2 rounded-full ${CONEXION_WS[estadoConexion].punto}`}
+            />
           </span>
-        ))}
+          {CONEXION_WS[estadoConexion].etiqueta}
+        </span>
       </div>
 
       <Card>
@@ -99,6 +140,11 @@ export function MonitorPage() {
       {seleccionada !== undefined && (
         <PlazaDetailModal plaza={seleccionada} onClose={() => setSeleccionadaId(null)} />
       )}
+      {seleccionada !== undefined && (
+        <PlazaDetailModal plaza={seleccionada} onClose={() => setSeleccionadaId(null)} />
+      )}
+
+      <MonitorDevPanel plazas={plazas} simularEvento={simularEvento} />
     </div>
   )
 }
