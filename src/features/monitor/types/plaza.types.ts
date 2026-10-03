@@ -32,3 +32,10 @@ export interface FiltrosPlaza {
   sotano: string
   estado: EstadoPlaza | 'TODOS'
 }
+
+/** Payload de `plaza:estado_cambiado`. `ocupante` viaja cuando la plaza pasa a OCUPADA o RESERVADA. */
+export interface EventoPlazaCambiada {
+  id: string
+  estado: EstadoPlaza
+  ocupante?: VehiculoEstacionado
+}

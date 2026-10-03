@@ -1,6 +1,7 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { socket } from '@/lib/socket'
 import { MOCK_PLAZAS } from '../mocks/plazas.mock'
-import type { FiltrosPlaza, Plaza } from '../types/plaza.types'
+import type { EventoPlazaCambiada, FiltrosPlaza, Plaza } from '../types/plaza.types'
 
 /**
  * Estado local de plazas y filtros (RFA03, etapa 1).
@@ -69,6 +70,21 @@ export function usePlazas() {
       }),
     )
   }, [])
+
+  useEffect(() => {
+    function alCambiarEstado({ id, estado, ocupante }: EventoPlazaCambiada) {
+      // Sin `ocupante` en el payload se conserva el que ya tiene la plaza.
+      actualizarPlaza(id, ocupante ? { estado, ocupante } : { estado })
+    }
+
+    socket.on('plaza:estado_cambiado', alCambiarEstado)
+    socket.connect()
+
+    return () => {
+      socket.off('plaza:estado_cambiado', alCambiarEstado)
+      socket.disconnect()
+    }
+  }, [actualizarPlaza])
 
   return {
     plazas,

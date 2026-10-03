@@ -3,11 +3,13 @@ import type {
   AlertaSinSenalPayload,
   SensorActualizadoPayload,
 } from '@/features/sensores/types/sensor.types'
+import type { EventoPlazaCambiada } from '@/features/monitor/types/plaza.types'
 
 /** Eventos que emite el servidor. Se amplía cuando otros módulos usen el socket. */
 interface EventosServidor {
   'sensor:actualizado': (payload: SensorActualizadoPayload) => void
   'sensor:alerta_sin_senal': (payload: AlertaSinSenalPayload) => void
+  'plaza:estado_cambiado': (payload: EventoPlazaCambiada) => void
 }
 
 const URL_WS = import.meta.env.VITE_WS_URL || 'http://localhost:3000'
