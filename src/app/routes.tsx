@@ -7,6 +7,7 @@ import AccesoDenegadoPage from '@/features/auth/AccesoDenegadoPage'
 import { UsuariosPage } from '@/features/usuarios/UsuariosPage'
 import { UsuarioDetallePage } from '@/features/usuarios/UsuarioDetallePage'
 import { AccesosPage } from '@/features/accesos/AccesosPage'
+import { SensoresPage } from '@/features/sensores/SensoresPage'
 import { CuentasAdminPage } from '@/features/cuentas-admin/CuentasAdminPage'
 
 /**
@@ -46,10 +47,7 @@ export function AppRoutes() {
             path="/reservas"
             element={<PlaceholderPage rfa="RFA05" titulo="Reservas activas" />}
           />
-          <Route
-            path="/sensores"
-            element={<PlaceholderPage rfa="RFA04" titulo="Gestion de sensores" />}
-          />
+          <Route path="/sensores" element={<SensoresPage />} />
           <Route path="/accesos" element={<AccesosPage />} />
           <Route
             path="/contenido/faq"
