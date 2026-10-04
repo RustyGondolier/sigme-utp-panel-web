@@ -1,5 +1,4 @@
 import { Navigate, Route, Routes } from 'react-router'
-import { PlaceholderPage } from '@/app/PlaceholderPage'
 import { ProtectedLayout } from '@/app/layouts/ProtectedLayout'
 import { RequireAuth, RequireRole } from '@/app/guards/RequireAuth'
 import LoginPage from '@/features/auth/LoginPage'
@@ -13,6 +12,7 @@ import { AccesosPage } from '@/features/accesos/AccesosPage'
 import { CuentasAdminPage } from '@/features/cuentas-admin/CuentasAdminPage'
 import { MonitorPage } from '@/features/monitor/MonitorPage'
 import { SensoresPage } from '@/features/sensores/SensoresPage'
+import { DashboardPage } from '@/features/dashboard/DashboardPage'
 
 /**
  * Estructura de rutas segun RFA13.
@@ -40,7 +40,7 @@ export function AppRoutes() {
       {/* Protegidas: sesion + layout comun */}
       <Route element={<RequireAuth />}>
         <Route element={<ProtectedLayout />}>
-          <Route path="/" element={<PlaceholderPage rfa="RFA11" titulo="Dashboard" />} />
+          <Route path="/" element={<DashboardPage />} />
           <Route path="/usuarios" element={<UsuariosPage />} />
           <Route path="/usuarios/:id" element={<UsuarioDetallePage />} />
           <Route path="/monitor" element={<MonitorPage />} />
