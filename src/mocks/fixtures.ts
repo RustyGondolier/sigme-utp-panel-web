@@ -1,11 +1,13 @@
 import type {
   Acceso,
+  CategoriaFaq,
   Cochera,
   CuentaAdmin,
   DetalleUsuario,
   EntradaAuditoria,
   EstadoReserva,
   Plaza,
+  PreguntaFaq,
   Reserva,
   Sensor,
   Usuario,
@@ -96,6 +98,72 @@ export const SENSORES_MOCK: Sensor[] = PLAZAS_MOCK.flatMap((plaza, indice) =>
       ]
     : [],
 )
+
+const en = (minutos: number) => new Date(Date.now() + minutos * 60_000).toISOString()
+
+export const RESERVAS_MOCK: Reserva[] = [
+  {
+    id: 'res-01',
+    usuarioId: 'usr-02',
+    codigoUsuario: '20245555',
+    nombreUsuario: 'Luis Mendoza',
+    cocheraId: COCHERA_PRINCIPAL.id,
+    plazaId: 'pla-03',
+    codigoPlaza: 'A-03',
+    estado: 'ACTIVA',
+    solicitadaEn: hace(10),
+    venceEn: en(20),
+  },
+  {
+    id: 'res-02',
+    usuarioId: 'usr-03',
+    codigoUsuario: '20246666',
+    nombreUsuario: 'Maria Torres',
+    cocheraId: COCHERA_PRINCIPAL.id,
+    plazaId: 'pla-05',
+    codigoPlaza: 'A-05',
+    estado: 'ACTIVA',
+    solicitadaEn: hace(5),
+    venceEn: en(25),
+  },
+]
+
+export const CATEGORIAS_FAQ_MOCK: CategoriaFaq[] = [
+  {
+    id: 'cat-01',
+    nombre: 'Reservas',
+    orden: 1,
+  },
+  {
+    id: 'cat-02',
+    nombre: 'Ingreso al estacionamiento',
+    orden: 2,
+  },
+]
+
+export const PREGUNTAS_FAQ_MOCK: PreguntaFaq[] = [
+  {
+    id: 'faq-01',
+    categoriaId: 'cat-01',
+    pregunta: 'Cuanto dura una reserva?',
+    respuesta: 'Una reserva permanece activa durante 30 minutos.',
+    orden: 1,
+  },
+  {
+    id: 'faq-02',
+    categoriaId: 'cat-01',
+    pregunta: 'Como cancelo una reserva?',
+    respuesta: 'La reserva puede cancelarse desde la aplicacion antes de su vencimiento.',
+    orden: 2,
+  },
+  {
+    id: 'faq-03',
+    categoriaId: 'cat-02',
+    pregunta: 'Como ingreso al estacionamiento?',
+    respuesta: 'El acceso se realiza utilizando el sistema habilitado por la universidad.',
+    orden: 1,
+  },
+]
 
 /**
  * Usuarios de la app para RFA01. Suficientes para probar la paginacion
@@ -683,6 +751,30 @@ export const CLAVES_ADMIN_MOCK: Record<string, string> = {
  * UTC, como manda RFA10.
  */
 export const AUDITORIA_MOCK: EntradaAuditoria[] = [
+  {
+    id: 'aud-006',
+    adminId: 'adm-001',
+    adminNombre: 'Administrador',
+    accion: 'CANCELAR_RESERVA',
+    elemento: 'Reserva res-01',
+    ocurridoEn: new Date(Date.now() - 15 * 60_000).toISOString(),
+  },
+  {
+    id: 'aud-005',
+    adminId: 'adm-001',
+    adminNombre: 'Administrador',
+    accion: 'CREAR_CATEGORIA_FAQ',
+    elemento: 'Categoria Reservas',
+    ocurridoEn: new Date(Date.now() - 60 * 60_000).toISOString(),
+  },
+  {
+    id: 'aud-004',
+    adminId: 'adm-001',
+    adminNombre: 'Administrador',
+    accion: 'EDITAR_PREGUNTA_FAQ',
+    elemento: 'Pregunta faq-01',
+    ocurridoEn: new Date(Date.now() - 2 * 60 * 60_000).toISOString(),
+  },
   {
     id: 'aud-003',
     adminId: 'adm-001',

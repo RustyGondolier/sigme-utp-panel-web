@@ -29,7 +29,7 @@ export function SearchInput({
       />
       <input
         id={id}
-        type="text"
+        type="search"
         value={valor}
         onChange={(e) => onCambio(e.target.value)}
         placeholder={placeholder}

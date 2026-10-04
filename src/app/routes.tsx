@@ -4,12 +4,15 @@ import { ProtectedLayout } from '@/app/layouts/ProtectedLayout'
 import { RequireAuth, RequireRole } from '@/app/guards/RequireAuth'
 import LoginPage from '@/features/auth/LoginPage'
 import AccesoDenegadoPage from '@/features/auth/AccesoDenegadoPage'
+import { ReservasPage } from '@/features/reservas/ReservasPage'
+import { FaqPage } from '@/features/faq/FaqPage'
+import { AuditoriaPage } from '@/features/auditoria/AuditoriaPage'
 import { UsuariosPage } from '@/features/usuarios/UsuariosPage'
 import { UsuarioDetallePage } from '@/features/usuarios/UsuarioDetallePage'
 import { AccesosPage } from '@/features/accesos/AccesosPage'
-import { SensoresPage } from '@/features/sensores/SensoresPage'
-import { MonitorPage } from '@/features/monitor/MonitorPage'
 import { CuentasAdminPage } from '@/features/cuentas-admin/CuentasAdminPage'
+import { MonitorPage } from '@/features/monitor/MonitorPage'
+import { SensoresPage } from '@/features/sensores/SensoresPage'
 
 /**
  * Estructura de rutas segun RFA13.
@@ -41,24 +44,15 @@ export function AppRoutes() {
           <Route path="/usuarios" element={<UsuariosPage />} />
           <Route path="/usuarios/:id" element={<UsuarioDetallePage />} />
           <Route path="/monitor" element={<MonitorPage />} />
-          <Route
-            path="/reservas"
-            element={<PlaceholderPage rfa="RFA05" titulo="Reservas activas" />}
-          />
+          <Route path="/reservas" element={<ReservasPage />} />
           <Route path="/sensores" element={<SensoresPage />} />
           <Route path="/accesos" element={<AccesosPage />} />
-          <Route
-            path="/contenido/faq"
-            element={<PlaceholderPage rfa="RFA08" titulo="Preguntas frecuentes" />}
-          />
+          <Route path="/contenido/faq" element={<FaqPage />} />
 
           {/* RFA13 caso E1: seccion restringida por rol. */}
           <Route element={<RequireRole roles={['ADMINISTRADOR']} />}>
             <Route path="/configuracion/administradores" element={<CuentasAdminPage />} />
-            <Route
-              path="/configuracion/auditoria"
-              element={<PlaceholderPage rfa="RFA10" titulo="Audit log" />}
-            />
+            <Route path="/configuracion/auditoria" element={<AuditoriaPage />} />
           </Route>
 
           <Route path="/acceso-denegado" element={<AccesoDenegadoPage />} />
