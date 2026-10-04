@@ -1,7 +1,9 @@
 import { CalendarClock, Car, Gauge, RadioTower } from 'lucide-react'
 import { CONFIG_ESTADO_PLAZA } from '@/features/monitor/plazas.etiquetas'
+import type { EstadoConexion } from '@/features/sensores/types/sensor.types'
 import { AlertasFeed } from './components/AlertasFeed'
 import { BarraProgreso } from './components/BarraProgreso'
+import { DashboardDevPanel } from './components/DashboardDevPanel'
 import { KPICard } from './components/KPICard'
 import { OcupacionSotanosCard } from './components/OcupacionSotanosCard'
 import { tonoPorOcupacion, type TonoKPI } from './dashboard.estilos'
@@ -21,9 +23,43 @@ const ETIQUETA_OCUPACION: Record<TonoKPI, string> = {
   neutro: '',
 }
 
+const CONEXION_WS: Record<
+  EstadoConexion,
+  { etiqueta: string; clases: string; punto: string; animado: boolean }
+> = {
+  CONECTADO: {
+    etiqueta: 'Conectado',
+    clases: 'bg-emerald-50 text-emerald-700 ring-emerald-600/20',
+    punto: 'bg-emerald-500',
+    animado: true,
+  },
+  REINTENTANDO: {
+    etiqueta: 'Reintentando…',
+    clases: 'bg-amber-50 text-amber-700 ring-amber-600/20',
+    punto: 'bg-amber-500',
+    animado: false,
+  },
+  DESCONECTADO: {
+    etiqueta: 'Desconectado',
+    clases: 'bg-red-50 text-red-700 ring-red-600/20',
+    punto: 'bg-red-500',
+    animado: false,
+  },
+}
+
 export function DashboardPage() {
-  const { isLoading, kpis, resumenSensores, ocupacionSotanos, alertas, descartarAlerta } =
-    useDashboard()
+  const {
+    isLoading,
+    estadoSocket,
+    plazas,
+    sensores,
+    simularEvento,
+    kpis,
+    resumenSensores,
+    ocupacionSotanos,
+    alertas,
+    descartarAlerta,
+  } = useDashboard()
 
   if (isLoading) {
     return (
@@ -60,11 +96,31 @@ export function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-lg font-semibold text-slate-800">Dashboard (RFA11)</h2>
-        <p className="text-sm text-slate-500">
-          Resumen del estacionamiento: ocupación, sensores, reservas y alertas recientes.
-        </p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h2 className="text-lg font-semibold text-slate-800">Dashboard (RFA11)</h2>
+          <p className="text-sm text-slate-500">
+            Resumen del estacionamiento: ocupación, sensores, reservas y alertas recientes.
+          </p>
+        </div>
+
+        <span
+          role="status"
+          aria-label={`WebSocket ${CONEXION_WS[estadoSocket].etiqueta.toLowerCase()}`}
+          className={`inline-flex items-center gap-2 rounded-full px-2.5 py-1 text-xs font-medium ring-1 ring-inset ${CONEXION_WS[estadoSocket].clases}`}
+        >
+          <span className="relative flex size-2">
+            {CONEXION_WS[estadoSocket].animado && (
+              <span
+                className={`absolute inline-flex h-full w-full animate-ping rounded-full opacity-75 ${CONEXION_WS[estadoSocket].punto}`}
+              />
+            )}
+            <span
+              className={`relative inline-flex size-2 rounded-full ${CONEXION_WS[estadoSocket].punto}`}
+            />
+          </span>
+          {CONEXION_WS[estadoSocket].etiqueta}
+        </span>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -136,6 +192,8 @@ export function DashboardPage() {
           <AlertasFeed alertas={alertas} onDescartar={descartarAlerta} />
         </div>
       </div>
+
+      <DashboardDevPanel plazas={plazas} sensores={sensores} simularEvento={simularEvento} />
     </div>
   )
 }

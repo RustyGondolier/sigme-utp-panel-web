@@ -15,8 +15,7 @@ import {
   calcularResumenSensores,
 } from '../dashboard.calculos'
 import { MOCK_ALERTAS_DASHBOARD } from '../data/dashboard.mocks'
-import type { AlertaDashboard } from '../types/dashboard.types'
-
+import type { AlertaDashboard, EventoSimuladoDashboard } from '../types/dashboard.types'
 const MAX_ALERTAS = 50
 
 /** Misma regla que `actualizarPlaza` de usePlazas: ignora OCUPADA/RESERVADA sin ocupante. */
@@ -154,9 +153,31 @@ export function useDashboard() {
     }
   }, [agregarAlerta])
 
+  /**
+   * Solo desarrollo: entrega un evento a los listeners ya registrados en el
+   * socket, como si lo hubiera emitido el servidor. En produccion no hace nada.
+   */
+  const simularEvento = useCallback((evento: EventoSimuladoDashboard) => {
+    if (!import.meta.env.DEV) return
+    switch (evento.tipo) {
+      case 'plaza:estado_cambiado':
+        socket.listeners('plaza:estado_cambiado').forEach((fn) => fn(evento.payload))
+        break
+      case 'sensor:actualizado':
+        socket.listeners('sensor:actualizado').forEach((fn) => fn(evento.payload))
+        break
+      case 'sensor:alerta_sin_senal':
+        socket.listeners('sensor:alerta_sin_senal').forEach((fn) => fn(evento.payload))
+        break
+    }
+  }, [])
+
   return {
     isLoading,
     estadoSocket,
+    plazas,
+    sensores,
+    simularEvento,
     kpis,
     resumenSensores,
     ocupacionSotanos,

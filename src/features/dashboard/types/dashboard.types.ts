@@ -8,6 +8,12 @@ export interface KPISGenerales {
   porcentajeOcupacion: number
 }
 
+import type { EventoPlazaCambiada } from '@/features/monitor/types/plaza.types'
+import type {
+  AlertaSinSenalPayload,
+  SensorActualizadoPayload,
+} from '@/features/sensores/types/sensor.types'
+
 export interface ResumenSensoresKPI {
   total: number
   activos: number
@@ -43,3 +49,9 @@ export interface OcupacionPorSotano {
   /** Misma definición que `KPISGenerales.porcentajeOcupacion`, por sótano. */
   porcentaje: number
 }
+
+/** Evento de prueba que `simularEvento` entrega a los listeners del socket. */
+export type EventoSimuladoDashboard =
+  | { tipo: 'plaza:estado_cambiado'; payload: EventoPlazaCambiada }
+  | { tipo: 'sensor:actualizado'; payload: SensorActualizadoPayload }
+  | { tipo: 'sensor:alerta_sin_senal'; payload: AlertaSinSenalPayload }
