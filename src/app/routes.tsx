@@ -1,5 +1,4 @@
 import { Navigate, Route, Routes } from 'react-router'
-import { PlaceholderPage } from '@/app/PlaceholderPage'
 import { ProtectedLayout } from '@/app/layouts/ProtectedLayout'
 import { RequireAuth, RequireRole } from '@/app/guards/RequireAuth'
 import LoginPage from '@/features/auth/LoginPage'
@@ -11,6 +10,9 @@ import { UsuariosPage } from '@/features/usuarios/UsuariosPage'
 import { UsuarioDetallePage } from '@/features/usuarios/UsuarioDetallePage'
 import { AccesosPage } from '@/features/accesos/AccesosPage'
 import { CuentasAdminPage } from '@/features/cuentas-admin/CuentasAdminPage'
+import { MonitorPage } from '@/features/monitor/MonitorPage'
+import { SensoresPage } from '@/features/sensores/SensoresPage'
+import { DashboardPage } from '@/features/dashboard/DashboardPage'
 
 /**
  * Estructura de rutas segun RFA13.
@@ -38,18 +40,12 @@ export function AppRoutes() {
       {/* Protegidas: sesion + layout comun */}
       <Route element={<RequireAuth />}>
         <Route element={<ProtectedLayout />}>
-          <Route path="/" element={<PlaceholderPage rfa="RFA11" titulo="Dashboard" />} />
+          <Route path="/" element={<DashboardPage />} />
           <Route path="/usuarios" element={<UsuariosPage />} />
           <Route path="/usuarios/:id" element={<UsuarioDetallePage />} />
-          <Route
-            path="/monitor"
-            element={<PlaceholderPage rfa="RFA03" titulo="Monitoreo del estacionamiento" />}
-          />
+          <Route path="/monitor" element={<MonitorPage />} />
           <Route path="/reservas" element={<ReservasPage />} />
-          <Route
-            path="/sensores"
-            element={<PlaceholderPage rfa="RFA04" titulo="Gestion de sensores" />}
-          />
+          <Route path="/sensores" element={<SensoresPage />} />
           <Route path="/accesos" element={<AccesosPage />} />
           <Route path="/contenido/faq" element={<FaqPage />} />
 
