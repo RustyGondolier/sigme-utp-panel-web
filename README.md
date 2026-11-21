@@ -45,6 +45,11 @@ copy .env.example .env  # Windows
 | `VITE_ENABLE_MOCK`  | `true`                          | `false` desactiva MSW y usa la API real                   |
 | `VITE_APP_ENV`      | `development`                   | Se muestra en la UI para no confundir demo con producción |
 
+> El panel corre con **MSW** (`VITE_ENABLE_MOCK=true`) y **no necesita el
+> backend** para desarrollarse. La guía completa del entorno compartido
+> (backend, app móvil, prueba desde el celular y despliegue en Render) está en
+> `docs/ENTORNO.md` del repo `sigme-utp`.
+
 ## Correr el proyecto
 
 ```bash
